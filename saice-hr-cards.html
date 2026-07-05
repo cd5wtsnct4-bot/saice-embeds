@@ -14,7 +14,11 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#F4F6FA;padding:16px
 .icon{font-size:1.8rem;margin-bottom:8px}
 h3{font-size:.85rem;font-weight:700;color:#0D2B55;margin-bottom:4px}
 p{font-size:.74rem;color:#4A5568;line-height:1.4}
-</style>
+/* responsive */
+@media(max-width:1100px){.grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:820px){.grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.grid{grid-template-columns:1fr}body{padding:12px}}
+html,body{width:100%;max-width:100%}img,svg{max-width:100%}</style>
 </head>
 <body>
 <div class="grid">
@@ -27,5 +31,32 @@ p{font-size:.74rem;color:#4A5568;line-height:1.4}
   <a href="#" class="card"><div class="icon">🎓</div><h3>Training Records</h3><p>View your CPD points, completed courses and certifications.</p></a>
   <a href="#" class="card warn"><div class="icon">🏖️</div><h3>Leave Balance</h3><p>Check your current annual, sick and family responsibility leave balances.</p></a>
 </div>
+
+<script>
+/* SharePoint Embed auto-height: resizes the hosting iframe so stacked
+   mobile layouts are never clipped. Works because the embed is served
+   from the same SharePoint origin; silently no-ops otherwise. */
+(function(){
+  function fit(){
+    var h = document.documentElement.scrollHeight;
+    /* same-origin path (no-op when hosted on GitHub) */
+    try{
+      var fe = window.frameElement;
+      if(fe){ fe.style.width='100%'; fe.style.maxWidth='100%'; fe.style.height=h+'px'; }
+    }catch(e){}
+    /* cross-origin path: notify the SharePoint page; requires a listener
+       (SPFx application customizer or script editor) on the parent page */
+    try{
+      if(window.parent && window.parent !== window){
+        window.parent.postMessage({type:'saice-widget-resize', href:location.href, height:h}, '*');
+      }
+    }catch(e){}
+  }
+  window.addEventListener('load', fit);
+  window.addEventListener('resize', fit);
+  if (window.ResizeObserver) { new ResizeObserver(fit).observe(document.body); }
+  else { setInterval(fit, 800); }
+})();
+</script>
 </body>
 </html>

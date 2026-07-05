@@ -26,7 +26,10 @@ h3{font-size:.94rem;font-weight:700;color:#0D2B55;margin-bottom:6px;line-height:
 .badge.near{background:transparent;color:#047857;border:1.5px solid #047857}
 .badge.hold{background:#E8640A;color:#fff}
 .badge.plan{color:#374151;font-weight:700}
-</style>
+/* responsive */
+@media(max-width:960px){.grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.grid{grid-template-columns:1fr}body{padding:12px}.card{padding:16px}}
+html,body{width:100%;max-width:100%}img,svg{max-width:100%}</style>
 </head>
 <body>
 <div class="grid">
@@ -80,5 +83,32 @@ h3{font-size:.94rem;font-weight:700;color:#0D2B55;margin-bottom:6px;line-height:
   </a>
 
 </div>
+
+<script>
+/* SharePoint Embed auto-height: resizes the hosting iframe so stacked
+   mobile layouts are never clipped. Works because the embed is served
+   from the same SharePoint origin; silently no-ops otherwise. */
+(function(){
+  function fit(){
+    var h = document.documentElement.scrollHeight;
+    /* same-origin path (no-op when hosted on GitHub) */
+    try{
+      var fe = window.frameElement;
+      if(fe){ fe.style.width='100%'; fe.style.maxWidth='100%'; fe.style.height=h+'px'; }
+    }catch(e){}
+    /* cross-origin path: notify the SharePoint page; requires a listener
+       (SPFx application customizer or script editor) on the parent page */
+    try{
+      if(window.parent && window.parent !== window){
+        window.parent.postMessage({type:'saice-widget-resize', href:location.href, height:h}, '*');
+      }
+    }catch(e){}
+  }
+  window.addEventListener('load', fit);
+  window.addEventListener('resize', fit);
+  if (window.ResizeObserver) { new ResizeObserver(fit).observe(document.body); }
+  else { setInterval(fit, 800); }
+})();
+</script>
 </body>
 </html>

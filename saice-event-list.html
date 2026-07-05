@@ -21,7 +21,9 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#F4F6FA;padding:16px
 .org{background:#FEF3C7;color:#D97706}
 .grn{background:#DCFCE7;color:#15803D}
 .reg{flex-shrink:0;background:#0A7EA4;color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:.74rem;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block}
-</style>
+/* responsive */
+@media(max-width:560px){body{padding:12px}.ev{flex-wrap:wrap;gap:10px}.info{flex:1 1 calc(100% - 60px)}.reg{flex:1 1 100%;text-align:center;padding:9px 14px}}
+html,body{width:100%;max-width:100%}img,svg{max-width:100%}</style>
 </head>
 <body>
 <div class="list">
@@ -32,5 +34,32 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#F4F6FA;padding:16px
   <div class="ev"><div class="date"><div class="day">22</div><div class="mon">Jul</div></div><div class="info"><h3>Hydraulics &amp; Stormwater Design Workshop</h3><p>Pretoria · CSIR Conference Centre · 08:30 – 16:30</p><div class="tags"><span class="bt teal">CPD · 6 Points</span><span class="bt org">Workshop</span></div></div><a href="#" class="reg">Register</a></div>
   <div class="ev"><div class="date"><div class="day">5</div><div class="mon">Aug</div></div><div class="info"><h3>Technical Writing for Engineers</h3><p>Online · Teams · 09:00 – 13:00 SAST</p><div class="tags"><span class="bt teal">CPD · 4 Points</span><span class="bt grn">Webinar</span></div></div><a href="#" class="reg">Register</a></div>
 </div>
+
+<script>
+/* SharePoint Embed auto-height: resizes the hosting iframe so stacked
+   mobile layouts are never clipped. Works because the embed is served
+   from the same SharePoint origin; silently no-ops otherwise. */
+(function(){
+  function fit(){
+    var h = document.documentElement.scrollHeight;
+    /* same-origin path (no-op when hosted on GitHub) */
+    try{
+      var fe = window.frameElement;
+      if(fe){ fe.style.width='100%'; fe.style.maxWidth='100%'; fe.style.height=h+'px'; }
+    }catch(e){}
+    /* cross-origin path: notify the SharePoint page; requires a listener
+       (SPFx application customizer or script editor) on the parent page */
+    try{
+      if(window.parent && window.parent !== window){
+        window.parent.postMessage({type:'saice-widget-resize', href:location.href, height:h}, '*');
+      }
+    }catch(e){}
+  }
+  window.addEventListener('load', fit);
+  window.addEventListener('resize', fit);
+  if (window.ResizeObserver) { new ResizeObserver(fit).observe(document.body); }
+  else { setInterval(fit, 800); }
+})();
+</script>
 </body>
 </html>

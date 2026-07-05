@@ -26,7 +26,12 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#F4F6FA;padding:16px
 .pbi-icon{font-size:1.8rem}
 .pbi strong{color:#0D2B55;font-size:.86rem;display:block;margin-bottom:4px}
 .pbi p{font-size:.74rem;color:#4A5568}
-</style>
+/* responsive */
+@media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:760px){.chart-grid{grid-template-columns:1fr}}
+@media(max-width:480px){body{padding:12px}.kpi-val{font-size:1.6rem}.bar-lbl{width:78px}.pbi{flex-direction:column;text-align:center}}
+@media(max-width:360px){.kpi-grid{grid-template-columns:1fr}}
+html,body{width:100%;max-width:100%}img,svg{max-width:100%}</style>
 </head>
 <body>
 
@@ -62,5 +67,32 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#F4F6FA;padding:16px
   <div><strong>Full Power BI Reports available to authorised users</strong><p>Project financials, HR dashboards and event analytics reports are embedded in Power BI. Contact your SharePoint admin to request access.</p></div>
 </div>
 
+
+<script>
+/* SharePoint Embed auto-height: resizes the hosting iframe so stacked
+   mobile layouts are never clipped. Works because the embed is served
+   from the same SharePoint origin; silently no-ops otherwise. */
+(function(){
+  function fit(){
+    var h = document.documentElement.scrollHeight;
+    /* same-origin path (no-op when hosted on GitHub) */
+    try{
+      var fe = window.frameElement;
+      if(fe){ fe.style.width='100%'; fe.style.maxWidth='100%'; fe.style.height=h+'px'; }
+    }catch(e){}
+    /* cross-origin path: notify the SharePoint page; requires a listener
+       (SPFx application customizer or script editor) on the parent page */
+    try{
+      if(window.parent && window.parent !== window){
+        window.parent.postMessage({type:'saice-widget-resize', href:location.href, height:h}, '*');
+      }
+    }catch(e){}
+  }
+  window.addEventListener('load', fit);
+  window.addEventListener('resize', fit);
+  if (window.ResizeObserver) { new ResizeObserver(fit).observe(document.body); }
+  else { setInterval(fit, 800); }
+})();
+</script>
 </body>
 </html>

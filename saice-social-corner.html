@@ -17,7 +17,9 @@ h2{font-size:.95rem;font-weight:700;color:#0D2B55;margin-bottom:14px}
 .text{font-size:.78rem;color:#4A5568;line-height:1.5;margin-bottom:8px}
 .tags{display:flex;gap:5px;flex-wrap:wrap}
 .tag{font-size:.65rem;background:#DBEAFE;color:#1E40AF;padding:2px 8px;border-radius:20px;font-weight:600}
-</style>
+/* responsive */
+@media(max-width:600px){.grid{grid-template-columns:1fr}body{padding:14px}}
+html,body{width:100%;max-width:100%}img,svg{max-width:100%}</style>
 </head>
 <body>
 <h2>💬 Social Corner</h2>
@@ -27,5 +29,32 @@ h2{font-size:.95rem;font-weight:700;color:#0D2B55;margin-bottom:14px}
   <div class="post"><div class="author"><div class="av">TD</div><div><div class="name">Thandi Dlamini</div><div class="time">2 days ago</div></div></div><div class="text">Don't forget — SAICE PDP Annual Conference registrations close this Friday. Cape Town, 2 July!</div><div class="tags"><span class="tag">#Events</span><span class="tag">#Conference</span></div></div>
   <div class="post"><div class="author"><div class="av">PV</div><div><div class="name">Peter van der Merwe</div><div class="time">3 days ago</div></div></div><div class="text">New Safety &amp; SHEQ templates are now available in the Forms library. Please use the updated HIRA template for all new projects.</div><div class="tags"><span class="tag">#Safety</span><span class="tag">#Templates</span></div></div>
 </div>
+
+<script>
+/* SharePoint Embed auto-height: resizes the hosting iframe so stacked
+   mobile layouts are never clipped. Works because the embed is served
+   from the same SharePoint origin; silently no-ops otherwise. */
+(function(){
+  function fit(){
+    var h = document.documentElement.scrollHeight;
+    /* same-origin path (no-op when hosted on GitHub) */
+    try{
+      var fe = window.frameElement;
+      if(fe){ fe.style.width='100%'; fe.style.maxWidth='100%'; fe.style.height=h+'px'; }
+    }catch(e){}
+    /* cross-origin path: notify the SharePoint page; requires a listener
+       (SPFx application customizer or script editor) on the parent page */
+    try{
+      if(window.parent && window.parent !== window){
+        window.parent.postMessage({type:'saice-widget-resize', href:location.href, height:h}, '*');
+      }
+    }catch(e){}
+  }
+  window.addEventListener('load', fit);
+  window.addEventListener('resize', fit);
+  if (window.ResizeObserver) { new ResizeObserver(fit).observe(document.body); }
+  else { setInterval(fit, 800); }
+})();
+</script>
 </body>
 </html>

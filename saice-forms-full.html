@@ -30,7 +30,11 @@ body{font-family:'Segoe UI',system-ui,sans-serif;padding:16px}
 .c6 .top{background:linear-gradient(135deg,#6D28D9,#8B5CF6)}
 .c7 .top{background:linear-gradient(135deg,#D97706,#F59E0B)}
 .c8 .top{background:linear-gradient(135deg,#0F766E,#14B8A6)}
-</style>
+/* responsive */
+@media(max-width:1100px){.grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:820px){.grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.grid{grid-template-columns:1fr}body{padding:12px}}
+html,body{width:100%;max-width:100%}img,svg{max-width:100%}</style>
 </head>
 <body>
 <div class="search-bar"><input type="text" placeholder="Search all forms and templates…"/><button>Search</button></div>
@@ -44,5 +48,32 @@ body{font-family:'Segoe UI',system-ui,sans-serif;padding:16px}
   <a href="https://allysaice.sharepoint.com/sites/SAICEPDP/Sales/Forms/AllItems.aspx" target="_parent" class="card c7"><div class="top"><div class="ic">📈</div><div class="title">Sales &amp; Proposals</div></div><div class="body"><p>Proposal and tender templates, pricing schedules and presentation decks.</p><ul class="files"><li>→ Proposal Template.docx</li><li>→ Tender Response Format.docx</li><li>→ Pricing Schedule.xlsx</li><li>→ Client Presentation.pptx</li></ul><span class="link">Open Full Library (14 items)</span></div></a>
   <a href="https://allysaice.sharepoint.com/sites/SAICEPDP/Procurement/Forms/AllItems.aspx" target="_parent" class="card c8"><div class="top"><div class="ic">🛒</div><div class="title">Procurement</div></div><div class="body"><p>Purchase order forms, supplier evaluations, RFQ templates and GRNs.</p><ul class="files"><li>→ Purchase Order Form.docx</li><li>→ Supplier Evaluation.xlsx</li><li>→ Request for Quotation.docx</li><li>→ Goods Received Note.docx</li></ul><span class="link">Open Full Library (10 items)</span></div></a>
 </div>
+
+<script>
+/* SharePoint Embed auto-height: resizes the hosting iframe so stacked
+   mobile layouts are never clipped. Works because the embed is served
+   from the same SharePoint origin; silently no-ops otherwise. */
+(function(){
+  function fit(){
+    var h = document.documentElement.scrollHeight;
+    /* same-origin path (no-op when hosted on GitHub) */
+    try{
+      var fe = window.frameElement;
+      if(fe){ fe.style.width='100%'; fe.style.maxWidth='100%'; fe.style.height=h+'px'; }
+    }catch(e){}
+    /* cross-origin path: notify the SharePoint page; requires a listener
+       (SPFx application customizer or script editor) on the parent page */
+    try{
+      if(window.parent && window.parent !== window){
+        window.parent.postMessage({type:'saice-widget-resize', href:location.href, height:h}, '*');
+      }
+    }catch(e){}
+  }
+  window.addEventListener('load', fit);
+  window.addEventListener('resize', fit);
+  if (window.ResizeObserver) { new ResizeObserver(fit).observe(document.body); }
+  else { setInterval(fit, 800); }
+})();
+</script>
 </body>
 </html>

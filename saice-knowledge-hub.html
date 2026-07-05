@@ -19,7 +19,10 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#F4F6FA;padding:0}
 .cat h3{font-size:.88rem;font-weight:700;color:#0D2B55;margin-bottom:6px}
 .cat p{font-size:.74rem;color:#4A5568;margin-bottom:10px;line-height:1.4}
 .count{font-size:.7rem;font-weight:700;color:#0A7EA4;background:#EBF8FF;padding:3px 10px;border-radius:20px;display:inline-block}
-</style>
+/* responsive */
+@media(max-width:860px){.cats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.cats{grid-template-columns:1fr;padding:14px}.search-wrap{padding:28px 16px}.search-wrap h2{font-size:1.15rem}}
+html,body{width:100%;max-width:100%}img,svg{max-width:100%}</style>
 </head>
 <body>
 <div class="search-wrap">
@@ -35,5 +38,32 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#F4F6FA;padding:0}
   <a href="#" class="cat"><h3>💡 Lessons Learned</h3><p>Post-project reviews, lessons identified and improvement recommendations.</p><span class="count">19 documents</span></a>
   <a href="#" class="cat"><h3>❓ FAQs</h3><p>Answers to the most common project, HR, IT and compliance questions.</p><span class="count">56 articles</span></a>
 </div>
+
+<script>
+/* SharePoint Embed auto-height: resizes the hosting iframe so stacked
+   mobile layouts are never clipped. Works because the embed is served
+   from the same SharePoint origin; silently no-ops otherwise. */
+(function(){
+  function fit(){
+    var h = document.documentElement.scrollHeight;
+    /* same-origin path (no-op when hosted on GitHub) */
+    try{
+      var fe = window.frameElement;
+      if(fe){ fe.style.width='100%'; fe.style.maxWidth='100%'; fe.style.height=h+'px'; }
+    }catch(e){}
+    /* cross-origin path: notify the SharePoint page; requires a listener
+       (SPFx application customizer or script editor) on the parent page */
+    try{
+      if(window.parent && window.parent !== window){
+        window.parent.postMessage({type:'saice-widget-resize', href:location.href, height:h}, '*');
+      }
+    }catch(e){}
+  }
+  window.addEventListener('load', fit);
+  window.addEventListener('resize', fit);
+  if (window.ResizeObserver) { new ResizeObserver(fit).observe(document.body); }
+  else { setInterval(fit, 800); }
+})();
+</script>
 </body>
 </html>

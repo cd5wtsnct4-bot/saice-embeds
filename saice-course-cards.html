@@ -24,7 +24,10 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#F4F6FA;padding:16px
 .cpd{font-size:.7rem;font-weight:700;color:#0A7EA4;background:#EBF8FF;padding:3px 8px;border-radius:20px}
 .enrol{background:#E8640A;color:#fff;border:none;border-radius:6px;padding:5px 14px;font-size:.72rem;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block}
 .date{font-size:.68rem;color:#718096}
-</style>
+/* responsive */
+@media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.grid{grid-template-columns:1fr}body{padding:12px}}
+html,body{width:100%;max-width:100%}img,svg{max-width:100%}</style>
 </head>
 <body>
 <div class="section-title">Technical Training</div>
@@ -40,5 +43,32 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#F4F6FA;padding:16px
   <div class="card"><div class="banner cb5">🗣️</div><div class="body"><h3>Technical Writing &amp; Reporting</h3><p>Write clear, professional engineering reports and executive summaries.</p><div class="footer"><span class="cpd">CPD: 4 Points</span><a href="#" class="enrol">Enrol</a></div><div class="date">📅 Next: 5 Aug 2026 · 1 day</div></div></div>
   <div class="card"><div class="banner cb6">🤖</div><div class="body"><h3>AI &amp; Digital Tools for Engineers</h3><p>Using Copilot, SharePoint, Power BI and automation tools in your workflow.</p><div class="footer"><span class="cpd">CPD: 4 Points</span><a href="#" class="enrol">Enrol</a></div><div class="date">📅 Next: 12 Aug 2026 · 1 day</div></div></div>
 </div>
+
+<script>
+/* SharePoint Embed auto-height: resizes the hosting iframe so stacked
+   mobile layouts are never clipped. Works because the embed is served
+   from the same SharePoint origin; silently no-ops otherwise. */
+(function(){
+  function fit(){
+    var h = document.documentElement.scrollHeight;
+    /* same-origin path (no-op when hosted on GitHub) */
+    try{
+      var fe = window.frameElement;
+      if(fe){ fe.style.width='100%'; fe.style.maxWidth='100%'; fe.style.height=h+'px'; }
+    }catch(e){}
+    /* cross-origin path: notify the SharePoint page; requires a listener
+       (SPFx application customizer or script editor) on the parent page */
+    try{
+      if(window.parent && window.parent !== window){
+        window.parent.postMessage({type:'saice-widget-resize', href:location.href, height:h}, '*');
+      }
+    }catch(e){}
+  }
+  window.addEventListener('load', fit);
+  window.addEventListener('resize', fit);
+  if (window.ResizeObserver) { new ResizeObserver(fit).observe(document.body); }
+  else { setInterval(fit, 800); }
+})();
+</script>
 </body>
 </html>
