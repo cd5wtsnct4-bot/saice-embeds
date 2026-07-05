@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>SAICE Course Cards</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#F4F6FA;padding:16px}
+.section-title{font-size:.78rem;font-weight:700;color:#0D2B55;text-transform:uppercase;letter-spacing:.5px;padding-bottom:8px;border-bottom:2px solid #E2E8F0;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+.card{background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08)}
+.banner{height:88px;font-size:2.4rem;display:flex;align-items:center;justify-content:center}
+.cb1{background:linear-gradient(135deg,#0D2B55,#0A7EA4)}
+.cb2{background:linear-gradient(135deg,#7B2FF7,#A855F7)}
+.cb3{background:linear-gradient(135deg,#047857,#059669)}
+.cb4{background:linear-gradient(135deg,#BE185D,#EC4899)}
+.cb5{background:linear-gradient(135deg,#D97706,#F59E0B)}
+.cb6{background:linear-gradient(135deg,#0F766E,#14B8A6)}
+.body{padding:14px}
+.body h3{font-size:.86rem;font-weight:700;color:#0D2B55;margin-bottom:6px}
+.body p{font-size:.74rem;color:#4A5568;margin-bottom:10px;line-height:1.4}
+.footer{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.cpd{font-size:.7rem;font-weight:700;color:#0A7EA4;background:#EBF8FF;padding:3px 8px;border-radius:20px}
+.enrol{background:#E8640A;color:#fff;border:none;border-radius:6px;padding:5px 14px;font-size:.72rem;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block}
+.date{font-size:.68rem;color:#718096}
+</style>
+</head>
+<body>
+<div class="section-title">Technical Training</div>
+<div class="grid">
+  <div class="card"><div class="banner cb1">🏗️</div><div class="body"><h3>Advanced Structural Analysis</h3><p>Deep dive into load calculations, material behaviour and failure modes for complex structures.</p><div class="footer"><span class="cpd">CPD: 8 Points</span><a href="#" class="enrol">Enrol</a></div><div class="date">📅 Next: 24 June 2026 · 2 days</div></div></div>
+  <div class="card"><div class="banner cb2">🌊</div><div class="body"><h3>Hydraulics &amp; Water Systems</h3><p>Design principles for stormwater, irrigation and water treatment infrastructure.</p><div class="footer"><span class="cpd">CPD: 6 Points</span><a href="#" class="enrol">Enrol</a></div><div class="date">📅 Next: 8 July 2026 · 1 day</div></div></div>
+  <div class="card"><div class="banner cb3">🛣️</div><div class="body"><h3>Road Pavement Design</h3><p>TRH4 and TRH14 methods, materials testing and maintenance planning.</p><div class="footer"><span class="cpd">CPD: 6 Points</span><a href="#" class="enrol">Enrol</a></div><div class="date">📅 Next: 15 July 2026 · 1 day</div></div></div>
+</div>
+
+<div class="section-title">Professional Development</div>
+<div class="grid">
+  <div class="card"><div class="banner cb4">📋</div><div class="body"><h3>Project Management for Engineers</h3><p>Scope, schedule, budget and risk management for civil engineering projects.</p><div class="footer"><span class="cpd">CPD: 10 Points</span><a href="#" class="enrol">Enrol</a></div><div class="date">📅 Next: 22 July 2026 · 3 days</div></div></div>
+  <div class="card"><div class="banner cb5">🗣️</div><div class="body"><h3>Technical Writing &amp; Reporting</h3><p>Write clear, professional engineering reports and executive summaries.</p><div class="footer"><span class="cpd">CPD: 4 Points</span><a href="#" class="enrol">Enrol</a></div><div class="date">📅 Next: 5 Aug 2026 · 1 day</div></div></div>
+  <div class="card"><div class="banner cb6">🤖</div><div class="body"><h3>AI &amp; Digital Tools for Engineers</h3><p>Using Copilot, SharePoint, Power BI and automation tools in your workflow.</p><div class="footer"><span class="cpd">CPD: 4 Points</span><a href="#" class="enrol">Enrol</a></div><div class="date">📅 Next: 12 Aug 2026 · 1 day</div></div></div>
+</div>
+</body>
+</html>

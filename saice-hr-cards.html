@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>SAICE HR Cards</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#F4F6FA;padding:16px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.card{background:#fff;border-radius:10px;padding:18px;box-shadow:0 2px 12px rgba(0,0,0,.08);border-top:3px solid #0A7EA4;cursor:pointer;transition:box-shadow .2s;text-decoration:none;display:block;color:inherit}
+.card:hover{box-shadow:0 6px 24px rgba(0,0,0,.15)}
+.card.warn{border-top-color:#E8640A}
+.icon{font-size:1.8rem;margin-bottom:8px}
+h3{font-size:.85rem;font-weight:700;color:#0D2B55;margin-bottom:4px}
+p{font-size:.74rem;color:#4A5568;line-height:1.4}
+</style>
+</head>
+<body>
+<div class="grid">
+  <a href="#" class="card"><div class="icon">📋</div><h3>Apply for Leave</h3><p>Submit annual, sick, family responsibility or study leave directly online.</p></a>
+  <a href="#" class="card"><div class="icon">📥</div><h3>Download Forms</h3><p>All HR forms — tax declarations, banking details updates, medical aid changes.</p></a>
+  <a href="#" class="card"><div class="icon">📖</div><h3>Employee Handbook</h3><p>Your complete guide to company policies, procedures and benefits.</p></a>
+  <a href="#" class="card warn"><div class="icon">💊</div><h3>Wellness</h3><p>EAP programme, wellness resources, mental health support and fitness benefits.</p></a>
+  <a href="#" class="card"><div class="icon">👤</div><h3>Staff Directory</h3><p>Find contact details, roles and photos for all SAICE PDP team members.</p></a>
+  <a href="#" class="card"><div class="icon">📊</div><h3>Performance Reviews</h3><p>Access your review schedule, self-assessments and past appraisal documents.</p></a>
+  <a href="#" class="card"><div class="icon">🎓</div><h3>Training Records</h3><p>View your CPD points, completed courses and certifications.</p></a>
+  <a href="#" class="card warn"><div class="icon">🏖️</div><h3>Leave Balance</h3><p>Check your current annual, sick and family responsibility leave balances.</p></a>
+</div>
+</body>
+</html>

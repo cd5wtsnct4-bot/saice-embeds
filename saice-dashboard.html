@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>SAICE Dashboard</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#F4F6FA;padding:16px}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.kpi{background:#fff;border-radius:10px;padding:18px;box-shadow:0 2px 12px rgba(0,0,0,.08);border-top:4px solid #0A7EA4}
+.kpi.warn{border-top-color:#E8640A}
+.kpi-val{font-size:2rem;font-weight:800;color:#0D2B55;margin-bottom:2px}
+.kpi-lbl{font-size:.78rem;color:#4A5568;font-weight:600;margin-bottom:4px}
+.kpi-trend{font-size:.7rem;color:#047857;font-weight:600}
+.kpi.warn .kpi-trend{color:#D97706}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.chart{background:#fff;border-radius:10px;padding:18px;box-shadow:0 2px 12px rgba(0,0,0,.08)}
+.chart h3{font-size:.84rem;font-weight:700;color:#0D2B55;margin-bottom:12px}
+.bar{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.bar-lbl{font-size:.72rem;color:#718096;width:90px;flex-shrink:0}
+.bar-track{flex:1;height:8px;background:#E2E8F0;border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;background:linear-gradient(90deg,#0A7EA4,#0D2B55);border-radius:4px}
+.bar-val{font-size:.72rem;font-weight:700;color:#0D2B55;width:34px;text-align:right;flex-shrink:0}
+.pbi{background:#EBF8FF;border:1px solid #BAE6FD;border-radius:10px;padding:16px;display:flex;align-items:center;gap:14px}
+.pbi-icon{font-size:1.8rem}
+.pbi strong{color:#0D2B55;font-size:.86rem;display:block;margin-bottom:4px}
+.pbi p{font-size:.74rem;color:#4A5568}
+</style>
+</head>
+<body>
+
+<div class="kpi-grid">
+  <div class="kpi"><div class="kpi-val">48</div><div class="kpi-lbl">Active Projects</div><div class="kpi-trend">↑ 6 from last month</div></div>
+  <div class="kpi"><div class="kpi-val">87%</div><div class="kpi-lbl">Training Completion</div><div class="kpi-trend">↑ 12% from Q1</div></div>
+  <div class="kpi warn"><div class="kpi-val">6</div><div class="kpi-lbl">Projects On Hold</div><div class="kpi-trend">↑ 2 from last month</div></div>
+  <div class="kpi"><div class="kpi-val">320</div><div class="kpi-lbl">Total Staff</div><div class="kpi-trend">↑ 14 new joiners</div></div>
+</div>
+
+<div class="chart-grid">
+  <div class="chart">
+    <h3>Project Status by Region</h3>
+    <div class="bar"><div class="bar-lbl">Gauteng</div><div class="bar-track"><div class="bar-fill" style="width:80%"></div></div><div class="bar-val">16</div></div>
+    <div class="bar"><div class="bar-lbl">Western Cape</div><div class="bar-track"><div class="bar-fill" style="width:55%"></div></div><div class="bar-val">11</div></div>
+    <div class="bar"><div class="bar-lbl">KwaZulu-Natal</div><div class="bar-track"><div class="bar-fill" style="width:45%"></div></div><div class="bar-val">9</div></div>
+    <div class="bar"><div class="bar-lbl">Eastern Cape</div><div class="bar-track"><div class="bar-fill" style="width:30%"></div></div><div class="bar-val">6</div></div>
+    <div class="bar"><div class="bar-lbl">Limpopo</div><div class="bar-track"><div class="bar-fill" style="width:15%"></div></div><div class="bar-val">3</div></div>
+    <div class="bar"><div class="bar-lbl">Other</div><div class="bar-track"><div class="bar-fill" style="width:15%"></div></div><div class="bar-val">3</div></div>
+  </div>
+  <div class="chart">
+    <h3>Training Completions by Category</h3>
+    <div class="bar"><div class="bar-lbl">Structural</div><div class="bar-track"><div class="bar-fill" style="width:90%"></div></div><div class="bar-val">92%</div></div>
+    <div class="bar"><div class="bar-lbl">Safety</div><div class="bar-track"><div class="bar-fill" style="width:95%"></div></div><div class="bar-val">97%</div></div>
+    <div class="bar"><div class="bar-lbl">Proj Mgmt</div><div class="bar-track"><div class="bar-fill" style="width:78%"></div></div><div class="bar-val">80%</div></div>
+    <div class="bar"><div class="bar-lbl">Digital</div><div class="bar-track"><div class="bar-fill" style="width:60%"></div></div><div class="bar-val">62%</div></div>
+    <div class="bar"><div class="bar-lbl">Leadership</div><div class="bar-track"><div class="bar-fill" style="width:55%"></div></div><div class="bar-val">56%</div></div>
+  </div>
+</div>
+
+<div class="pbi">
+  <div class="pbi-icon">📊</div>
+  <div><strong>Full Power BI Reports available to authorised users</strong><p>Project financials, HR dashboards and event analytics reports are embedded in Power BI. Contact your SharePoint admin to request access.</p></div>
+</div>
+
+</body>
+</html>

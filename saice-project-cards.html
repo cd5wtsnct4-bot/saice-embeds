@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>SAICE Projects</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#F4F6FA;padding:16px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.card{background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,.08);border-top:4px solid #0A7EA4;text-decoration:none;display:block;color:inherit;transition:box-shadow .2s}
+.card:hover{box-shadow:0 8px 28px rgba(0,0,0,.14)}
+.card.hold{border-top-color:#E8640A}
+.card.plan{border-top-color:#94A3B8}
+.type{font-size:.68rem;font-weight:800;color:#0A7EA4;letter-spacing:.7px;margin-bottom:10px;display:flex;align-items:center;gap:5px}
+.card.hold .type{color:#E8640A}
+.card.plan .type{color:#64748B}
+h3{font-size:.94rem;font-weight:700;color:#0D2B55;margin-bottom:6px;line-height:1.35}
+.meta{font-size:.74rem;color:#718096;margin-bottom:16px}
+.track{height:6px;background:#E2E8F0;border-radius:3px;overflow:hidden;margin-bottom:10px}
+.fill{height:100%;background:#0D2B55;border-radius:3px}
+.foot{display:flex;align-items:center;justify-content:space-between}
+.pct{font-size:.78rem;color:#4A5568;font-weight:500}
+.badge{font-size:.68rem;font-weight:700;padding:3px 13px;border-radius:20px;letter-spacing:.2px}
+.badge.active{background:#0D2B55;color:#fff}
+.badge.near{background:transparent;color:#047857;border:1.5px solid #047857}
+.badge.hold{background:#E8640A;color:#fff}
+.badge.plan{color:#374151;font-weight:700}
+</style>
+</head>
+<body>
+<div class="grid">
+
+  <a href="https://allysaice.sharepoint.com/sites/SAICEPDP/Lists/Projects/AllItems.aspx" target="_parent" class="card">
+    <div class="type">🏗️ BRIDGE</div>
+    <h3>Limpopo Bridge Rehabilitation — Phase 2</h3>
+    <div class="meta">📍 Limpopo · Owner: Sarah Nkosi</div>
+    <div class="track"><div class="fill" style="width:72%"></div></div>
+    <div class="foot"><span class="pct">72% complete</span><span class="badge active">Active</span></div>
+  </a>
+
+  <a href="https://allysaice.sharepoint.com/sites/SAICEPDP/Lists/Projects/AllItems.aspx" target="_parent" class="card">
+    <div class="type">🚗 ROAD</div>
+    <h3>N14 Pavement Upgrade — Gauteng</h3>
+    <div class="meta">📍 Gauteng · Owner: James Molefe</div>
+    <div class="track"><div class="fill" style="width:45%"></div></div>
+    <div class="foot"><span class="pct">45% complete</span><span class="badge active">Active</span></div>
+  </a>
+
+  <a href="https://allysaice.sharepoint.com/sites/SAICEPDP/Lists/Projects/AllItems.aspx" target="_parent" class="card">
+    <div class="type">💧 WATER</div>
+    <h3>Cape Winelands Water Supply Upgrade</h3>
+    <div class="meta">📍 Western Cape · Owner: Thandi Dlamini</div>
+    <div class="track"><div class="fill" style="width:88%"></div></div>
+    <div class="foot"><span class="pct">88% complete</span><span class="badge near">Near Complete</span></div>
+  </a>
+
+  <a href="https://allysaice.sharepoint.com/sites/SAICEPDP/Lists/Projects/AllItems.aspx" target="_parent" class="card hold">
+    <div class="type">🏢 BUILDING</div>
+    <h3>SAICE KZN Regional Office Fit-Out</h3>
+    <div class="meta">📍 KwaZulu-Natal · Owner: Bongani Zulu</div>
+    <div class="track"><div class="fill" style="width:30%"></div></div>
+    <div class="foot"><span class="pct">30% complete</span><span class="badge hold">On Hold</span></div>
+  </a>
+
+  <a href="https://allysaice.sharepoint.com/sites/SAICEPDP/Lists/Projects/AllItems.aspx" target="_parent" class="card plan">
+    <div class="type">🚗 ROAD</div>
+    <h3>R80 Safety Improvements — Tshwane</h3>
+    <div class="meta">📍 Gauteng · Owner: Peter van der Merwe</div>
+    <div class="track"><div class="fill" style="width:15%"></div></div>
+    <div class="foot"><span class="pct">15% complete</span><span class="badge plan">Planning</span></div>
+  </a>
+
+  <a href="https://allysaice.sharepoint.com/sites/SAICEPDP/Lists/Projects/AllItems.aspx" target="_parent" class="card">
+    <div class="type">🌊 HYDRAULICS</div>
+    <h3>uMngeni River Flood Management Plan</h3>
+    <div class="meta">📍 KwaZulu-Natal · Owner: Naledi Khumalo</div>
+    <div class="track"><div class="fill" style="width:60%"></div></div>
+    <div class="foot"><span class="pct">60% complete</span><span class="badge active">Active</span></div>
+  </a>
+
+</div>
+</body>
+</html>

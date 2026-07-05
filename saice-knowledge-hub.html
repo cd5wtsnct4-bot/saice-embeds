@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>SAICE Knowledge Hub</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#F4F6FA;padding:0}
+.search-wrap{background:linear-gradient(135deg,#0D2B55,#0A7EA4);padding:36px 28px;text-align:center}
+.search-wrap h2{font-size:1.3rem;font-weight:800;color:#fff;margin-bottom:6px}
+.search-wrap p{font-size:.8rem;color:rgba(255,255,255,.8);margin-bottom:18px}
+.search-bar{display:flex;max-width:460px;margin:0 auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.2)}
+.search-bar input{flex:1;padding:11px 16px;border:none;font-size:.86rem;outline:none}
+.search-bar button{background:#E8640A;color:#fff;border:none;padding:11px 20px;font-size:.8rem;font-weight:700;cursor:pointer}
+.cats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:20px}
+.cat{background:#fff;border-radius:10px;padding:18px;box-shadow:0 2px 12px rgba(0,0,0,.08);border-left:4px solid #0A7EA4;cursor:pointer;transition:box-shadow .2s;text-decoration:none;display:block;color:inherit}
+.cat:hover{box-shadow:0 6px 24px rgba(0,0,0,.15)}
+.cat h3{font-size:.88rem;font-weight:700;color:#0D2B55;margin-bottom:6px}
+.cat p{font-size:.74rem;color:#4A5568;margin-bottom:10px;line-height:1.4}
+.count{font-size:.7rem;font-weight:700;color:#0A7EA4;background:#EBF8FF;padding:3px 10px;border-radius:20px;display:inline-block}
+</style>
+</head>
+<body>
+<div class="search-wrap">
+  <h2>📚 Knowledge Hub</h2>
+  <p>Search standards, technical papers, procedures, best practices and lessons learned</p>
+  <div class="search-bar"><input type="text" placeholder="Search the knowledge base…"/><button>Search</button></div>
+</div>
+<div class="cats">
+  <a href="#" class="cat"><h3>📐 Standards &amp; Codes</h3><p>SANS, SABS, ASSHTO, Eurocodes and project-specific engineering standards.</p><span class="count">48 documents</span></a>
+  <a href="#" class="cat"><h3>📋 SOPs &amp; Procedures</h3><p>Standard operating procedures for all engineering and project management processes.</p><span class="count">34 documents</span></a>
+  <a href="#" class="cat"><h3>✅ Best Practices</h3><p>Internal guidelines, industry benchmarks and evidence-based engineering practices.</p><span class="count">27 documents</span></a>
+  <a href="#" class="cat"><h3>📄 Technical Papers</h3><p>Published research, conference papers and internal technical memoranda.</p><span class="count">112 documents</span></a>
+  <a href="#" class="cat"><h3>💡 Lessons Learned</h3><p>Post-project reviews, lessons identified and improvement recommendations.</p><span class="count">19 documents</span></a>
+  <a href="#" class="cat"><h3>❓ FAQs</h3><p>Answers to the most common project, HR, IT and compliance questions.</p><span class="count">56 articles</span></a>
+</div>
+</body>
+</html>
