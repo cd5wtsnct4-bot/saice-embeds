@@ -8,7 +8,7 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Segoe UI',system-ui,sans-serif;background:#F4F6FA;padding:20px}
 h2{font-size:.95rem;font-weight:700;color:#0D2B55;margin-bottom:14px}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:12px}
 .post{background:#fff;border-radius:8px;padding:14px;border-left:3px solid #0A7EA4}
 .author{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .av{width:32px;height:32px;background:#0D2B55;color:#fff;border-radius:50%;font-size:.78rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -18,7 +18,7 @@ h2{font-size:.95rem;font-weight:700;color:#0D2B55;margin-bottom:14px}
 .tags{display:flex;gap:5px;flex-wrap:wrap}
 .tag{font-size:.65rem;background:#DBEAFE;color:#1E40AF;padding:2px 8px;border-radius:20px;font-weight:600}
 /* responsive */
-@media(max-width:600px){.grid{grid-template-columns:1fr}body{padding:14px}}
+@media(max-width:600px){body{padding:14px}}
 html,body{width:100%;max-width:100%}img,svg{max-width:100%}</style>
 </head>
 <body>

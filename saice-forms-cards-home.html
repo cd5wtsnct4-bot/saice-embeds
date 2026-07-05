@@ -10,7 +10,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;padding:20px}
 .hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
 .hdr h2{font-size:.95rem;font-weight:700;color:#0D2B55}
 .hdr span{font-size:.72rem;color:#718096}
-.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:12px}
 .card{border-radius:8px;overflow:hidden;border:1px solid #E2E8F0;text-decoration:none;display:block;background:#fff;transition:box-shadow .2s}
 .card:hover{box-shadow:0 6px 24px rgba(0,0,0,.15)}
 .top{padding:14px 12px 10px;display:flex;align-items:center;gap:8px}
@@ -28,9 +28,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;padding:20px}
 .c7 .top{background:linear-gradient(135deg,#D97706,#F59E0B)}
 .c8 .top{background:linear-gradient(135deg,#0F766E,#14B8A6)}
 /* responsive */
-@media(max-width:1100px){.grid{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:820px){.grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:520px){.grid{grid-template-columns:1fr}body{padding:14px}.hdr{flex-direction:column;align-items:flex-start;gap:4px}}
+@media(max-width:520px){body{padding:14px}.hdr{flex-direction:column;align-items:flex-start;gap:4px}}
 html,body{width:100%;max-width:100%}img,svg{max-width:100%}</style>
 </head>
 <body>

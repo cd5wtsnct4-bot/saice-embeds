@@ -10,7 +10,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;padding:16px}
 .search-bar{display:flex;margin-bottom:16px;background:#fff;border-radius:8px;overflow:hidden;border:1px solid #E2E8F0}
 .search-bar input{flex:1;padding:10px 14px;border:none;font-size:.84rem;outline:none}
 .search-bar button{background:#0A7EA4;color:#fff;border:none;padding:10px 18px;font-size:.8rem;font-weight:700;cursor:pointer}
-.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(250px,100%),1fr));gap:14px}
 .card{border-radius:10px;overflow:hidden;border:1px solid #E2E8F0;text-decoration:none;display:block;background:#fff;transition:box-shadow .2s}
 .card:hover{box-shadow:0 6px 24px rgba(0,0,0,.15)}
 .top{padding:16px 14px 12px;display:flex;align-items:center;gap:10px}
@@ -31,9 +31,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;padding:16px}
 .c7 .top{background:linear-gradient(135deg,#D97706,#F59E0B)}
 .c8 .top{background:linear-gradient(135deg,#0F766E,#14B8A6)}
 /* responsive */
-@media(max-width:1100px){.grid{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:820px){.grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:520px){.grid{grid-template-columns:1fr}body{padding:12px}}
+@media(max-width:520px){body{padding:12px}}
 html,body{width:100%;max-width:100%}img,svg{max-width:100%}</style>
 </head>
 <body>

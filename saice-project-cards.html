@@ -7,7 +7,7 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Segoe UI',system-ui,sans-serif;background:#F4F6FA;padding:16px}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:16px}
 .card{background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,.08);border-top:4px solid #0A7EA4;text-decoration:none;display:block;color:inherit;transition:box-shadow .2s}
 .card:hover{box-shadow:0 8px 28px rgba(0,0,0,.14)}
 .card.hold{border-top-color:#E8640A}
@@ -27,8 +27,7 @@ h3{font-size:.94rem;font-weight:700;color:#0D2B55;margin-bottom:6px;line-height:
 .badge.hold{background:#E8640A;color:#fff}
 .badge.plan{color:#374151;font-weight:700}
 /* responsive */
-@media(max-width:960px){.grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:600px){.grid{grid-template-columns:1fr}body{padding:12px}.card{padding:16px}}
+@media(max-width:600px){body{padding:12px}.card{padding:16px}}
 html,body{width:100%;max-width:100%}img,svg{max-width:100%}</style>
 </head>
 <body>
