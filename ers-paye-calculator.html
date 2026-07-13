@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ERS PAYE Tax Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0b2647;
+    --navy-deep:#071a33;
+    --gold:#c79a3c;
+    --gold-light:#e4c878;
+    --crimson:#8f1d2c;
+    --paper:#f6f4ef;
+    --card:#ffffff;
+    --ink:#1c2430;
+    --ink-soft:#5a6272;
+    --line:#e1ddd2;
+    --good:#2f6b4f;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;
+    line-height:1.4;
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{
+    max-width:720px;
+    margin:0 auto;
+    padding:0 0 32px;
+  }
+  /* Header */
+  .header{
+    background:linear-gradient(155deg,var(--navy) 0%,var(--navy-deep) 100%);
+    color:#fff;
+    padding:28px 24px 26px;
+    border-bottom:4px solid var(--gold);
+    position:relative;
+    overflow:hidden;
+  }
+  .header::after{
+    content:"";
+    position:absolute;
+    right:-40px;
+    top:-60px;
+    width:220px;
+    height:220px;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(199,154,60,0.16) 0%, rgba(199,154,60,0) 70%);
+  }
+  .eyebrow{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-family:'Roboto Mono',monospace;
+    font-size:11px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--gold-light);
+    margin-bottom:10px;
+  }
+  .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--gold);}
+  h1{
+    font-family:'Source Serif 4',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:0 0 6px;
+    letter-spacing:-0.01em;
+  }
+  .header p{
+    margin:0;
+    color:rgba(255,255,255,0.72);
+    font-size:14px;
+    max-width:46ch;
+  }
+
+  /* Card */
+  .card{
+    background:var(--card);
+    margin:20px 24px 0;
+    border-radius:var(--radius);
+    border:1px solid var(--line);
+    box-shadow:0 1px 2px rgba(11,38,71,0.04);
+  }
+  .card-inner{padding:22px 22px 24px;}
+  .section-title{
+    font-family:'Roboto Mono',monospace;
+    font-size:11px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin:0 0 16px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .section-title::before{
+    content:"";
+    width:14px;height:2px;background:var(--gold);display:inline-block;
+  }
+
+  /* Toggle */
+  .seg{
+    display:inline-flex;
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:3px;
+    margin-bottom:18px;
+  }
+  .seg button{
+    border:none;
+    background:transparent;
+    font-family:inherit;
+    font-size:13px;
+    font-weight:600;
+    color:var(--ink-soft);
+    padding:7px 16px;
+    border-radius:6px;
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease;
+  }
+  .seg button.active{
+    background:var(--navy);
+    color:#fff;
+  }
+  .seg button:focus-visible, button:focus-visible, input:focus-visible{
+    outline:2px solid var(--gold);
+    outline-offset:2px;
+  }
+
+  .field{margin-bottom:16px;}
+  .field label{
+    display:block;
+    font-size:13px;
+    font-weight:600;
+    margin-bottom:6px;
+    color:var(--ink);
+  }
+  .field .hint{
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-top:5px;
+  }
+  .input-wrap{
+    display:flex;
+    align-items:stretch;
+    border:1.5px solid var(--line);
+    border-radius:8px;
+    overflow:hidden;
+    background:#fff;
+    transition:border-color .15s ease;
+  }
+  .input-wrap:focus-within{border-color:var(--navy);}
+  .input-wrap .prefix{
+    display:flex;align-items:center;justify-content:center;
+    padding:0 12px;
+    background:var(--paper);
+    color:var(--ink-soft);
+    font-family:'Roboto Mono',monospace;
+    font-size:13px;
+    border-right:1.5px solid var(--line);
+  }
+  .input-wrap input{
+    border:none;
+    outline:none;
+    padding:11px 12px;
+    font-size:16px;
+    font-family:'Roboto Mono',monospace;
+    width:100%;
+    color:var(--ink);
+    background:transparent;
+  }
+
+  .checkbox-row{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    padding:12px 0 2px;
+  }
+  .checkbox-row input[type=checkbox]{
+    width:18px;height:18px;
+    margin-top:1px;
+    accent-color:var(--navy);
+    flex-shrink:0;
+  }
+  .checkbox-row label{font-size:13px;color:var(--ink); cursor:pointer;}
+  .checkbox-row .hint{margin-top:2px;}
+
+  /* Results */
+  .results{
+    margin:20px 24px 0;
+  }
+  .result-hero{
+    background:var(--navy);
+    color:#fff;
+    border-radius:var(--radius);
+    padding:22px;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    flex-wrap:wrap;
+    gap:16px;
+    border:1px solid var(--navy-deep);
+  }
+  .result-hero .label{
+    font-family:'Roboto Mono',monospace;
+    font-size:11px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--gold-light);
+    margin-bottom:6px;
+  }
+  .result-hero .value{
+    font-family:'Source Serif 4',serif;
+    font-size:36px;
+    font-weight:600;
+    line-height:1;
+  }
+  .result-hero .sub{
+    text-align:right;
+  }
+  .result-hero .sub .num{
+    font-family:'Roboto Mono',monospace;
+    font-size:15px;
+    font-weight:500;
+  }
+  .result-hero .sub .cap{
+    font-size:11px;
+    color:rgba(255,255,255,0.65);
+    margin-top:2px;
+  }
+
+  .row-stats{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-top:12px;
+  }
+  .stat{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:14px 16px;
+  }
+  .stat .cap{font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.06em;font-family:'Roboto Mono',monospace;}
+  .stat .num{font-family:'Roboto Mono',monospace;font-size:19px;font-weight:500;margin-top:4px;color:var(--navy);}
+
+  /* Bracket ladder */
+  .ladder{margin-top:22px;}
+  .ladder-track{
+    display:flex;
+    height:34px;
+    border-radius:7px;
+    overflow:hidden;
+    border:1px solid var(--line);
+  }
+  .ladder-seg{
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:'Roboto Mono',monospace;
+    font-size:11px;
+    font-weight:500;
+    color:#fff;
+    transition:filter .15s ease;
+  }
+  .ladder-seg.inactive{
+    filter:grayscale(1) brightness(2.1);
+    color:var(--ink-soft);
+  }
+  .ladder-legend{
+    display:flex;
+    justify-content:space-between;
+    margin-top:6px;
+    font-size:10px;
+    color:var(--ink-soft);
+    font-family:'Roboto Mono',monospace;
+  }
+  .bracket-list{
+    margin-top:14px;
+    border:1px solid var(--line);
+    border-radius:8px;
+    overflow:hidden;
+  }
+  .bracket-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px 14px;
+    font-size:13px;
+    border-bottom:1px solid var(--line);
+    background:#fff;
+  }
+  .bracket-row:last-child{border-bottom:none;}
+  .bracket-row.dim{color:var(--ink-soft);}
+  .bracket-row .band{display:flex;align-items:center;gap:8px;}
+  .bracket-row .swatch{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+  .bracket-row .amt{font-family:'Roboto Mono',monospace;font-weight:500;}
+  .bracket-row.rebate{background:#f7fbf8;}
+  .bracket-row.rebate .amt{color:var(--good);}
+  .bracket-row.total{background:var(--paper);font-weight:600;}
+
+  .disclaimer{
+    margin:22px 24px 0;
+    padding:14px 16px;
+    border-left:3px solid var(--gold);
+    background:#fbf7ec;
+    font-size:12.5px;
+    color:var(--ink-soft);
+    border-radius:0 6px 6px 0;
+  }
+  .disclaimer strong{color:var(--ink);}
+
+  .footer{
+    margin:22px 24px 0;
+    padding-top:16px;
+    border-top:1px solid var(--line);
+    font-size:11.5px;
+    color:var(--ink-soft);
+    display:flex;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:6px;
+  }
+  .footer a{color:var(--navy);text-decoration:none;font-weight:600;}
+  .footer a:hover{text-decoration:underline;}
+
+  @media (max-width:480px){
+    .header{padding:22px 18px 22px;}
+    .card, .results, .disclaimer, .footer{margin-left:16px;margin-right:16px;}
+    .row-stats{grid-template-columns:1fr;}
+    .result-hero .sub{text-align:left;}
+    h1{font-size:22px;}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none !important;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div class="eyebrow"><span class="dot"></span>Eswatini Revenue Service</div>
+    <h1>PAYE Tax Calculator</h1>
+    <p>Estimate your monthly employees' tax (PAYE) using the current rates of normal tax for individuals.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-inner">
+      <p class="section-title">Your income</p>
+
+      <div class="seg" role="group" aria-label="Income period">
+        <button type="button" id="btn-monthly" class="active" onclick="setPeriod('monthly')">Monthly</button>
+        <button type="button" id="btn-annual" onclick="setPeriod('annual')">Annual</button>
+      </div>
+
+      <div class="field">
+        <label for="gross">Gross remuneration <span id="period-label">(per month)</span></label>
+        <div class="input-wrap">
+          <span class="prefix">E</span>
+          <input type="number" id="gross" inputmode="decimal" placeholder="0.00" min="0" step="0.01" oninput="calculate()">
+        </div>
+        <p class="hint">Salary, wages, benefits in kind and commission — before deductions.</p>
+      </div>
+
+      <div class="field">
+        <label for="deduction">Allowable deductions <span id="deduction-label">(per month, optional)</span></label>
+        <div class="input-wrap">
+          <span class="prefix">E</span>
+          <input type="number" id="deduction" inputmode="decimal" placeholder="0.00" min="0" step="0.01" oninput="calculate()">
+        </div>
+        <p class="hint">E.g. SNPF and approved pension fund contributions.</p>
+      </div>
+
+      <div class="checkbox-row">
+        <input type="checkbox" id="senior" onchange="calculate()">
+        <div>
+          <label for="senior">I am 60 years of age or older</label>
+          <p class="hint">Applies the higher annual rebate of E10,900 instead of E8,200.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="results">
+    <div class="result-hero">
+      <div>
+        <div class="label">Monthly PAYE deduction</div>
+        <div class="value" id="out-monthly-tax" aria-live="polite">E 0.00</div>
+      </div>
+      <div class="sub">
+        <div class="num" id="out-net-monthly">Net pay: E 0.00</div>
+        <div class="cap">estimated take-home per month</div>
+      </div>
+    </div>
+
+    <div class="row-stats">
+      <div class="stat">
+        <div class="cap">Annualised taxable income</div>
+        <div class="num" id="out-annual-income">E 0.00</div>
+      </div>
+      <div class="stat">
+        <div class="cap">Annual tax liability</div>
+        <div class="num" id="out-annual-tax">E 0.00</div>
+      </div>
+    </div>
+
+    <div class="ladder">
+      <p class="section-title" style="margin-bottom:12px;">How your tax is built up</p>
+      <div class="ladder-track" id="ladder-track"></div>
+      <div class="ladder-legend">
+        <span>E0</span>
+        <span>E100,000</span>
+        <span>E150,000</span>
+        <span>E200,000</span>
+        <span>+33%</span>
+      </div>
+
+      <div class="bracket-list" id="bracket-list"></div>
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    <strong>This is an estimate only.</strong> It applies the general PAYE calculation principles published by the ERS and assumes a full 12-month assessment period. Actual liability may differ — always verify with the Eswatini Revenue Service.
+  </div>
+
+  <div class="footer">
+    <span>Eswatini Revenue Service · Revenue Authority Act No. 1 of 2008</span>
+    <a href="https://www.ers.org.sz/IncomeTax/Paye" target="_blank" rel="noopener">Official PAYE guide →</a>
+  </div>
+
+</div>
+
+<script>
+const BRACKETS = [
+  { min: 0,      max: 100000,  base: 0,     rate: 0.20 },
+  { min: 100000, max: 150000,  base: 20000, rate: 0.25 },
+  { min: 150000, max: 200000,  base: 32500, rate: 0.30 },
+  { min: 200000, max: Infinity, base: 47500, rate: 0.33 }
+];
+const COLORS = ['#c79a3c', '#0b2647', '#8f1d2c', '#5a6272'];
+
+let period = 'monthly';
+
+function setPeriod(p){
+  period = p;
+  document.getElementById('btn-monthly').classList.toggle('active', p==='monthly');
+  document.getElementById('btn-annual').classList.toggle('active', p==='annual');
+  const suffix = p === 'monthly' ? '(per month)' : '(per year)';
+  document.getElementById('period-label').textContent = suffix;
+  document.getElementById('deduction-label').textContent = p === 'monthly' ? '(per month, optional)' : '(per year, optional)';
+  calculate();
+}
+
+function fmt(n){
+  return 'E ' + n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+function taxForAnnualIncome(income){
+  if(income <= 0) return { tax:0, bracketIndex:-1, perBracket:[0,0,0,0] };
+  let bIdx = BRACKETS.findIndex(b => income > b.min && income <= b.max);
+  if(bIdx === -1) bIdx = BRACKETS.length - 1;
+  const b = BRACKETS[bIdx];
+  const tax = b.base + b.rate * (income - b.min);
+
+  const perBracket = BRACKETS.map((br, i) => {
+    if(i < bIdx) return (br.max - br.min) * br.rate;
+    if(i === bIdx) return b.rate * (income - b.min);
+    return 0;
+  });
+
+  return { tax, bracketIndex: bIdx, perBracket };
+}
+
+function calculate(){
+  const grossInput = parseFloat(document.getElementById('gross').value) || 0;
+  const deductionInput = parseFloat(document.getElementById('deduction').value) || 0;
+  const isSenior = document.getElementById('senior').checked;
+
+  const annualGross = period === 'monthly' ? grossInput * 12 : grossInput;
+  const annualDeduction = period === 'monthly' ? deductionInput * 12 : deductionInput;
+  const annualTaxable = Math.max(0, annualGross - annualDeduction);
+
+  const { tax: grossTax, bracketIndex, perBracket } = taxForAnnualIncome(annualTaxable);
+  const rebate = isSenior ? 10900 : 8200;
+  const annualTax = Math.max(0, grossTax - rebate);
+  const monthlyTax = annualTax / 12;
+  const monthlyNet = (annualGross - annualDeduction) / 12 - monthlyTax + (period==='monthly' ? deductionInput : deductionInput/12) - (period==='monthly'? deductionInput : deductionInput/12);
+  // net pay = monthly gross - monthly deduction - monthly tax
+  const monthlyGrossDisplay = period === 'monthly' ? grossInput : grossInput/12;
+  const monthlyDeductionDisplay = period === 'monthly' ? deductionInput : deductionInput/12;
+  const netMonthly = monthlyGrossDisplay - monthlyDeductionDisplay - monthlyTax;
+
+  document.getElementById('out-monthly-tax').textContent = fmt(monthlyTax);
+  document.getElementById('out-net-monthly').textContent = 'Net pay: ' + fmt(Math.max(0,netMonthly));
+  document.getElementById('out-annual-income').textContent = fmt(annualTaxable);
+  document.getElementById('out-annual-tax').textContent = fmt(annualTax);
+
+  renderLadder(annualTaxable, bracketIndex, perBracket, rebate, annualTax, grossTax);
+}
+
+function renderLadder(income, activeIdx, perBracket, rebate, annualTax, grossTax){
+  const track = document.getElementById('ladder-track');
+  track.innerHTML = '';
+  const widths = [100000, 50000, 50000, 60000]; // proportional widths for display (last is capped visually)
+  const totalWidth = widths.reduce((a,b)=>a+b,0);
+
+  BRACKETS.forEach((b, i) => {
+    const seg = document.createElement('div');
+    seg.className = 'ladder-seg' + (activeIdx >=0 && i <= activeIdx ? '' : ' inactive');
+    seg.style.width = (widths[i] / totalWidth * 100) + '%';
+    seg.style.background = (activeIdx >=0 && i <= activeIdx) ? COLORS[i] : '#eeece5';
+    seg.textContent = (b.rate*100) + '%';
+    track.appendChild(seg);
+  });
+
+  const list = document.getElementById('bracket-list');
+  list.innerHTML = '';
+
+  BRACKETS.forEach((b, i) => {
+    const active = activeIdx >= 0 && i <= activeIdx;
+    const row = document.createElement('div');
+    row.className = 'bracket-row' + (active ? '' : ' dim');
+    const label = b.max === Infinity ? `Above E${b.min.toLocaleString()}` : `E${b.min.toLocaleString()} – E${b.max.toLocaleString()}`;
+    row.innerHTML = `
+      <span class="band"><span class="swatch" style="background:${active?COLORS[i]:'#d8d4c8'}"></span>${label} @ ${b.rate*100}%</span>
+      <span class="amt">${active ? fmt(perBracket[i]) : '—'}</span>
+    `;
+    list.appendChild(row);
+  });
+
+  const subtotalRow = document.createElement('div');
+  subtotalRow.className = 'bracket-row total';
+  subtotalRow.innerHTML = `<span>Gross tax before rebate</span><span class="amt">${fmt(grossTax)}</span>`;
+  list.appendChild(subtotalRow);
+
+  const rebateRow = document.createElement('div');
+  rebateRow.className = 'bracket-row rebate';
+  rebateRow.innerHTML = `<span>Less: annual rebate</span><span class="amt">– ${fmt(rebate)}</span>`;
+  list.appendChild(rebateRow);
+
+  const totalRow = document.createElement('div');
+  totalRow.className = 'bracket-row total';
+  totalRow.innerHTML = `<span>Annual tax liability</span><span class="amt">${fmt(annualTax)}</span>`;
+  list.appendChild(totalRow);
+}
+
+calculate();
+</script>
+</body>
+</html>
