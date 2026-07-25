@@ -181,6 +181,10 @@ select.filter{padding:9px 10px;border:1.5px solid var(--border);border-radius:8p
 .cal-daynum{font-size:.72rem;font-weight:700;color:var(--brand-primary);margin-bottom:4px}
 .cal-event{background:var(--brand-accent);color:var(--brand-primary-dark);font-size:.64rem;font-weight:700;padding:2px 6px;border-radius:5px;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
 .cal-more{font-size:.62rem;color:var(--text-muted)}
+.cal-legend{display:flex;flex-wrap:wrap;gap:4px 14px;margin-bottom:10px}
+.cal-legend-chip{display:flex;align-items:center;gap:6px;font-size:.72rem;color:var(--text-muted);cursor:pointer;user-select:none}
+.cal-legend-chip input{cursor:pointer}
+.cal-dot{display:inline-block;width:9px;height:9px;border-radius:50%;flex-shrink:0}
 @media(max-width:640px){.cal-cell{min-height:60px}.cal-daynum{font-size:.64rem}.cal-event{font-size:.58rem}}
 
 /* ---------- Line-item editor (proposals / invoices) ---------- */

@@ -29,6 +29,25 @@ define('MS_TENANT_ID', getenv('CRM_MS_TENANT_ID') ?: 'common');
 define('MS_REDIRECT_URI', getenv('CRM_MS_REDIRECT_URI') ?: 'https://YOUR-DOMAIN/elevatesjc-crm/auth/ms_callback.php');
 
 // ---------------------------------------------------------------
+// Microsoft 365 calendar sync (two-way, per-user connected mailboxes)
+// Register a second redirect URI on the same Azure app registration:
+//   https://YOUR-DOMAIN/elevatesjc-crm/auth/ms_calendar_callback.php
+// CRM_TOKEN_ENC_KEY must be a random base64-encoded 32-byte key
+// (generate with `openssl rand -base64 32`) — leave it blank to hide
+// the "Connect Microsoft Calendar" option entirely. Losing/rotating
+// this key permanently invalidates all stored connections; users
+// simply reconnect.
+// ---------------------------------------------------------------
+define('MS_CALENDAR_REDIRECT_URI', getenv('CRM_MS_CALENDAR_REDIRECT_URI') ?: 'https://YOUR-DOMAIN/elevatesjc-crm/auth/ms_calendar_callback.php');
+define('CRM_TOKEN_ENC_KEY', getenv('CRM_TOKEN_ENC_KEY') ?: '');
+// How many days of events to pull on each sync, centred on today.
+define('CRM_CALENDAR_SYNC_PAST_DAYS', (int)(getenv('CRM_CALENDAR_SYNC_PAST_DAYS') ?: 30));
+define('CRM_CALENDAR_SYNC_FUTURE_DAYS', (int)(getenv('CRM_CALENDAR_SYNC_FUTURE_DAYS') ?: 180));
+// Shared secret for the cron/sync_calendars.php endpoint (background sync
+// without anyone having the Calendar tab open). Leave blank to disable it.
+define('CRM_CRON_SECRET', getenv('CRM_CRON_SECRET') ?: '');
+
+// ---------------------------------------------------------------
 // App
 // ---------------------------------------------------------------
 define('APP_NAME', 'Elevate SJC CRM');

@@ -105,21 +105,51 @@ CREATE TABLE IF NOT EXISTS settings (
 -- calendar_events — meetings, training sessions, follow-up calls
 -- ---------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS calendar_events (
-  id             INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  title          VARCHAR(200) NOT NULL,
-  description    TEXT NULL,
-  start_datetime DATETIME NOT NULL,
-  end_datetime   DATETIME NULL,
-  all_day        TINYINT(1) NOT NULL DEFAULT 0,
-  location       VARCHAR(200) NULL,
-  contact_id     INT UNSIGNED NULL,
-  deal_id        INT UNSIGNED NULL,
-  created_by     INT UNSIGNED NULL,
-  created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT fk_cal_contact FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE SET NULL,
-  CONSTRAINT fk_cal_deal    FOREIGN KEY (deal_id)    REFERENCES deals(id)    ON DELETE SET NULL,
-  CONSTRAINT fk_cal_user    FOREIGN KEY (created_by) REFERENCES users(id)   ON DELETE SET NULL,
-  INDEX idx_cal_start (start_datetime)
+  id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  title           VARCHAR(200) NOT NULL,
+  description     TEXT NULL,
+  start_datetime  DATETIME NOT NULL,
+  end_datetime    DATETIME NULL,
+  all_day         TINYINT(1) NOT NULL DEFAULT 0,
+  location        VARCHAR(200) NULL,
+  contact_id      INT UNSIGNED NULL,
+  deal_id         INT UNSIGNED NULL,
+  connection_id   INT UNSIGNED NULL, -- linked Microsoft calendar, if any (see ms_calendar_connections)
+  ms_event_id     VARCHAR(300) NULL, -- Microsoft Graph event id, once synced
+  ms_last_modified DATETIME NULL,    -- Graph's lastModifiedDateTime, for last-write-wins on pull
+  sync_pending    TINYINT(1) NOT NULL DEFAULT 0, -- local edit not yet pushed to Graph
+  created_by      INT UNSIGNED NULL,
+  created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_cal_contact    FOREIGN KEY (contact_id)    REFERENCES contacts(id)                ON DELETE SET NULL,
+  CONSTRAINT fk_cal_deal       FOREIGN KEY (deal_id)       REFERENCES deals(id)                    ON DELETE SET NULL,
+  CONSTRAINT fk_cal_user       FOREIGN KEY (created_by)    REFERENCES users(id)                    ON DELETE SET NULL,
+  CONSTRAINT fk_cal_connection FOREIGN KEY (connection_id) REFERENCES ms_calendar_connections(id)  ON DELETE SET NULL,
+  UNIQUE KEY uq_cal_ms_event (connection_id, ms_event_id),
+  INDEX idx_cal_start (start_datetime),
+  INDEX idx_cal_connection (connection_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ---------------------------------------------------------------
+-- ms_calendar_connections — one row per Microsoft 365 mailbox a CRM
+-- user has linked for two-way calendar sync. Tokens are stored
+-- encrypted (see includes/crypto.php) — never plaintext.
+-- ---------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS ms_calendar_connections (
+  id                 INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id            INT UNSIGNED NOT NULL,
+  ms_oid             VARCHAR(64)  NOT NULL,
+  ms_email           VARCHAR(160) NULL,
+  display_name       VARCHAR(160) NULL,
+  color              VARCHAR(7)   NOT NULL DEFAULT '#2563eb',
+  access_token_enc   TEXT         NOT NULL,
+  refresh_token_enc  TEXT         NOT NULL,
+  token_expires_at   DATETIME     NOT NULL,
+  last_synced_at     DATETIME     NULL,
+  last_sync_error    VARCHAR(500) NULL,
+  created_at         DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_mscal_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_mscal_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ---------------------------------------------------------------

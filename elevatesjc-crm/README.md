@@ -44,10 +44,11 @@ mysql -u elevatesjc_crm -p elevatesjc_crm < schema.sql
 
 **Upgrading an existing install** that predates the calendar/proposals/
 invoicing/expenses tables? Don't re-run `schema.sql` — instead apply the
-migration, which only adds what's missing:
+migrations in order, which only add what's missing:
 
 ```bash
 mysql -u elevatesjc_crm -p elevatesjc_crm < migrations/002_calendar_proposals_invoices_expenses.sql
+mysql -u elevatesjc_crm -p elevatesjc_crm < migrations/003_ms_calendar_sync.sql
 ```
 
 ## 2. Configure `config.php`
@@ -60,6 +61,10 @@ fallbacks in place:
 |---|---|
 | `CRM_DB_HOST`, `CRM_DB_PORT`, `CRM_DB_NAME`, `CRM_DB_USER`, `CRM_DB_PASS` | MySQL connection |
 | `CRM_MS_CLIENT_ID`, `CRM_MS_CLIENT_SECRET`, `CRM_MS_TENANT_ID`, `CRM_MS_REDIRECT_URI` | Microsoft sign-in (optional — leave `CRM_MS_CLIENT_ID` blank to hide the button) |
+| `CRM_MS_CALENDAR_REDIRECT_URI` | Second redirect URI for "Connect Microsoft Calendar" (see §4b) |
+| `CRM_TOKEN_ENC_KEY` | Base64 32-byte key encrypting stored calendar OAuth tokens (see §4b) — leave blank to hide calendar-connect entirely |
+| `CRM_CALENDAR_SYNC_PAST_DAYS`, `CRM_CALENDAR_SYNC_FUTURE_DAYS` | Sync window size around today (defaults 30 / 180 days) |
+| `CRM_CRON_SECRET` | Shared secret for `cron/sync_calendars.php` background sync (see §5) — leave blank to disable it |
 | `CRM_FORCE_SECURE_COOKIES` | `true` in production (HTTPS); the session cookie won't be sent over plain HTTP otherwise |
 | `CRM_DEBUG` | `true` only while developing — surfaces PHP errors and DB error detail |
 
@@ -102,11 +107,57 @@ keys (RS256, fetched from the tenant's JWKS endpoint and cached for an
 hour) — a forged or tampered token is rejected before any session is
 created.
 
+## 4b. (Optional) Two-way Microsoft calendar sync
+
+Lets any CRM user connect their own Microsoft 365 mailbox so its calendar
+events show up in the CRM's **Calendar** view alongside everyone else's, and
+events created in the CRM get pushed to that mailbox too.
+
+1. **Generate an encryption key** for stored tokens — run
+   `openssl rand -base64 32` and set the result as `CRM_TOKEN_ENC_KEY`. This
+   never lives in the database; losing or rotating it just means everyone
+   reconnects their calendar (nothing else is affected).
+2. On the **same** Azure app registration used for sign-in (§4), add a
+   second **Web** redirect URI:
+   `https://YOUR-DOMAIN/path/to/elevatesjc-crm/auth/ms_calendar_callback.php`
+   — set `CRM_MS_CALENDAR_REDIRECT_URI` to match exactly.
+3. Under **API permissions**, add the delegated Microsoft Graph permission
+   `Calendars.ReadWrite` (in addition to the default `openid`/`profile`/
+   `email`/`offline_access` already used for sign-in).
+4. Each user connects their own calendar from **Settings > Connected
+   Calendars** — this is a per-user consent, independent of how they logged
+   into the CRM (local password or Microsoft SSO), so it works either way.
+
+**How sync works:** a connected event stays tied to the calendar it was
+created on — the CRM never guesses which mailbox to push a plain local
+event to, and a user can only file new events into their *own* connected
+calendar(s) (Microsoft doesn't let you write into someone else's mailbox
+without delegated access). Opening the Calendar tab opportunistically
+pulls fresh data for your own connections; there's also a manual **Sync
+now** button. For sync that doesn't depend on anyone having the tab open,
+add a cron job:
+
+```bash
+# cPanel > Cron Jobs, e.g. every 15 minutes
+php /home/youruser/public_html/elevatesjc-crm/cron/sync_calendars.php YOUR_CRM_CRON_SECRET
+```
+
+(set `CRM_CRON_SECRET` to a long random value first — the script refuses to
+run without it matching).
+
+**Known limitation:** events deleted directly in Outlook aren't
+automatically removed from the CRM — pulling only adds/updates what
+Microsoft's calendar-view API returns, which doesn't report deletions
+(that needs Graph's `/delta` endpoint, a possible future enhancement).
+Deleting from the CRM side does push a real delete to Outlook.
+
 ## 5. Calendar
 
 A month-view calendar (**Calendar** in the nav) for meetings, training
 sessions and follow-up calls, optionally linked to a contact and/or deal.
-Click a day to add an event, click an event to edit or delete it.
+Click a day to add an event, click an event to edit or delete it. A colour
+legend at the top lets you show/hide each connected Microsoft calendar (see
+§4b) alongside purely local CRM events.
 
 ## 6. Proposals & Invoicing
 
@@ -187,6 +238,10 @@ database rather than trusting a client-supplied path.
   database, a handful of named users) — it is not built for public
   self-signup, and there is no "forgot password" flow; an admin resets
   passwords via **Users**.
+- Microsoft calendar OAuth tokens are encrypted at rest (AES-256-GCM,
+  `CRM_TOKEN_ENC_KEY`) — a database dump alone doesn't expose usable
+  tokens. `cron/sync_calendars.php` is reachable over plain HTTP but is
+  useless without `CRM_CRON_SECRET`, compared with `hash_equals()`.
 
 ## Folder layout
 
@@ -198,10 +253,13 @@ elevatesjc-crm/
 ├── config.php               # DB + Microsoft OAuth config
 ├── schema.sql                # MySQL schema + seed data (fresh installs)
 ├── migrations/
-│   └── 002_calendar_proposals_invoices_expenses.sql   # for existing installs
+│   ├── 002_calendar_proposals_invoices_expenses.sql   # for existing installs
+│   └── 003_ms_calendar_sync.sql                        # adds Microsoft calendar connections
 ├── proposal_print.php        # printable proposal letterhead
 ├── invoice_print.php         # printable invoice letterhead (+ banking details)
 ├── download_receipt.php      # gated receipt image viewer
+├── cron/
+│   └── sync_calendars.php     # background sync for all connected calendars (secret-guarded)
 ├── includes/
 │   ├── db.php                # PDO connection
 │   ├── auth.php               # session/CSRF/login helpers
@@ -209,13 +267,19 @@ elevatesjc-crm/
 │   ├── numbering.php           # atomic invoice/proposal numbering
 │   ├── uploads.php             # secure receipt upload handling
 │   ├── ocr.php                  # best-effort tesseract OCR (feature-detected)
-│   └── msal_lite.php           # Microsoft OAuth2 + JWT verification (no external deps)
+│   ├── msal_lite.php           # Microsoft OAuth2 + JWT verification (no external deps)
+│   ├── crypto.php               # AES-256-GCM encryption for stored OAuth tokens
+│   ├── graph_calendar.php       # Microsoft Graph calendar API client
+│   └── calendar_sync.php        # two-way sync orchestration (push retries + pull)
 ├── auth/
 │   ├── ms_login.php           # redirects to Microsoft sign-in
-│   └── ms_callback.php         # handles the return trip, verifies + logs in
+│   ├── ms_callback.php         # handles the return trip, verifies + logs in
+│   ├── ms_calendar_connect.php  # redirects to Microsoft calendar consent
+│   └── ms_calendar_callback.php # stores the encrypted connection for the logged-in user
 ├── api/                       # JSON endpoints consumed by js/app.js
 │   ├── auth.php, contacts.php, deals.php, tasks.php, calendar.php,
-│   ├── proposals.php, invoices.php, expenses.php, expenses_upload.php,
+│   ├── calendar_connections.php, proposals.php, invoices.php,
+│   ├── expenses.php, expenses_upload.php,
 │   └── programs.php, settings.php, dashboard.php, users.php
 ├── uploads/receipts/          # scanned slips (denies direct web access)
 ├── css/styles.css
