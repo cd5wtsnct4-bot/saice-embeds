@@ -181,6 +181,7 @@ select.filter{padding:9px 10px;border:1.5px solid var(--border);border-radius:8p
 .cal-cell.today{border-color:var(--brand-accent);border-width:2px}
 .cal-daynum{font-size:.72rem;font-weight:700;color:var(--brand-primary);margin-bottom:4px}
 .cal-event{background:var(--brand-accent);color:var(--brand-primary-dark);font-size:.64rem;font-weight:700;padding:2px 6px;border-radius:5px;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+.cal-event-cont{opacity:.72;font-weight:600;font-style:italic}
 .cal-more{font-size:.62rem;color:var(--text-muted)}
 .cal-legend{display:flex;flex-wrap:wrap;gap:4px 14px;margin-bottom:10px}
 .cal-legend-chip{display:flex;align-items:center;gap:6px;font-size:.72rem;color:var(--text-muted);cursor:pointer;user-select:none}

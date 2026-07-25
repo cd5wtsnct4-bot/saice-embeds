@@ -79,6 +79,22 @@
   function ymd(d) {
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   }
+  /** Every calendar day (YYYY-MM-DD) an event occupies, from its start date
+   *  through its end date inclusive — a 2-day booking shows as booked on
+   *  both days, not just the day it started. */
+  function eventDayRange(startDatetime, endDatetime) {
+    const startDay = startDatetime.slice(0, 10);
+    const endDay = endDatetime ? endDatetime.slice(0, 10) : startDay;
+    if (endDay <= startDay) return [startDay];
+    const days = [];
+    const cursor = new Date(startDay + 'T00:00:00');
+    const last = new Date(endDay + 'T00:00:00');
+    while (cursor <= last) {
+      days.push(ymd(cursor));
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    return days;
+  }
 
   // ---------------- shared line-item editor (proposals + invoices) ----------------
   function renderLineItemRows(items) {
@@ -669,7 +685,11 @@
 
     const visibleEvents = events.filter((e) => !hiddenCalendars.has(e.connection_id ? String(e.connection_id) : 'local'));
     const eventsByDay = {};
-    visibleEvents.forEach((e) => { const day = e.start_datetime.slice(0, 10); (eventsByDay[day] = eventsByDay[day] || []).push(e); });
+    visibleEvents.forEach((e) => {
+      eventDayRange(e.start_datetime, e.end_datetime).forEach((day) => {
+        (eventsByDay[day] = eventsByDay[day] || []).push(e);
+      });
+    });
 
     const monthLabel = firstOfMonth.toLocaleDateString('en-ZA', { month: 'long', year: 'numeric' });
     const todayStr = ymd(new Date());
@@ -681,7 +701,10 @@
       const dayEvents = eventsByDay[dayStr] || [];
       cells += `<div class="cal-cell${inMonth ? '' : ' outside'}${dayStr === todayStr ? ' today' : ''}" data-date="${dayStr}">
         <div class="cal-daynum">${d.getDate()}</div>
-        ${dayEvents.slice(0, 3).map((e) => `<div class="cal-event" data-id="${e.id}"${e.calendar_color ? ` style="border-left:4px solid ${esc(e.calendar_color)}"` : ''}>${esc(e.title)}</div>`).join('')}
+        ${dayEvents.slice(0, 3).map((e) => {
+          const isStart = dayStr === e.start_datetime.slice(0, 10);
+          return `<div class="cal-event${isStart ? '' : ' cal-event-cont'}" data-id="${e.id}"${e.calendar_color ? ` style="border-left:4px solid ${esc(e.calendar_color)}"` : ''}>${isStart ? '' : '› '}${esc(e.title)}</div>`;
+        }).join('')}
         ${dayEvents.length > 3 ? `<div class="cal-more">+${dayEvents.length - 3} more</div>` : ''}
       </div>`;
     }

@@ -56,13 +56,15 @@ if ($method === 'GET') {
         json_out($row);
     }
 
-    // Range query for the visible calendar grid, e.g. ?start=2026-07-01&end=2026-08-11
-    // (events are placed on the grid by their start date only — no multi-day spanning bars)
+    // Range query for the visible calendar grid, e.g. ?start=2026-07-01&end=2026-08-11.
+    // Matches on overlap, not just start_datetime, so a multi-day booking that
+    // started before the visible range but runs into it still shows up — the
+    // front end then places it on every day it spans (see eventDayRange() in app.js).
     $start = $_GET['start'] ?? null;
     $end = $_GET['end'] ?? null;
     if ($start && $end) {
-        $stmt = $pdo->prepare(EVENT_SELECT . ' WHERE e.start_datetime BETWEEN ? AND ? ORDER BY e.start_datetime ASC');
-        $stmt->execute([$start . ' 00:00:00', $end . ' 23:59:59']);
+        $stmt = $pdo->prepare(EVENT_SELECT . ' WHERE e.start_datetime <= ? AND COALESCE(e.end_datetime, e.start_datetime) >= ? ORDER BY e.start_datetime ASC');
+        $stmt->execute([$end . ' 23:59:59', $start . ' 00:00:00']);
     } else {
         $stmt = $pdo->query(EVENT_SELECT . ' ORDER BY e.start_datetime ASC LIMIT 500');
     }
