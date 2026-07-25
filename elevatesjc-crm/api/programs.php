@@ -29,7 +29,7 @@ if ($method === 'POST') {
     if (!in_array($category, PROGRAM_CATEGORIES, true)) json_error('Invalid category.', 422);
 
     $stmt = $pdo->prepare('INSERT INTO programs (name, category, description, active) VALUES (?,?,?,?)');
-    $stmt->execute([$name, $category, $b['description'] ?? null, !empty($b['active']) ? 1 : 1]);
+    $stmt->execute([$name, $category, $b['description'] ?? null, !empty($b['active']) ? 1 : 0]);
     json_out(['id' => (int)$pdo->lastInsertId()], 201);
 }
 

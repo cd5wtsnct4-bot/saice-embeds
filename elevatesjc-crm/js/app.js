@@ -5,7 +5,12 @@
 
   const DEAL_STAGES = ['New Enquiry', 'Needs Assessment', 'Proposal Sent', 'Negotiation', 'Won', 'Lost'];
   const PROGRAM_CATEGORIES = ['Leadership Development', 'Technical Skills', 'Soft Skills', 'Data Analytics & Visualisation', 'E-Learning'];
-  const PAGE_TITLES = { dashboard: 'Dashboard', contacts: 'Contacts', deals: 'Pipeline', tasks: 'Tasks', programs: 'Programs', users: 'Users', settings: 'Settings' };
+  const PROPOSAL_STATUSES = ['draft', 'sent', 'accepted', 'declined'];
+  const INVOICE_STATUSES = ['draft', 'sent', 'paid', 'overdue', 'cancelled'];
+  const EXPENSE_CATEGORIES = ['Travel', 'Venue & Catering', 'Materials', 'Software & Subscriptions', 'Subsistence', 'Other'];
+  const EXPENSE_PAYMENT_METHODS = ['Card', 'Cash', 'EFT', 'Other'];
+  const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const PAGE_TITLES = { dashboard: 'Dashboard', contacts: 'Contacts', deals: 'Pipeline', calendar: 'Calendar', tasks: 'Tasks', proposals: 'Proposals', invoices: 'Invoicing', expenses: 'Expenses', programs: 'Programs', users: 'Users', settings: 'Settings' };
 
   const contentEl = document.getElementById('content');
   const pageTitleEl = document.getElementById('pageTitle');
@@ -65,9 +70,64 @@
       `<option value="${it[valueKey]}"${String(it[valueKey]) === String(selected) ? ' selected' : ''}>${esc(it[labelKey])}</option>`
     ).join('');
   }
+  function statusPillClass(status) {
+    return { sent: 'gold', accepted: 'teal', paid: 'teal', reimbursed: 'teal', approved: 'teal', declined: 'red', overdue: 'red', cancelled: 'red', draft: 'navy', pending: 'gold' }[status] || 'navy';
+  }
+  function ymd(d) {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  // ---------------- shared line-item editor (proposals + invoices) ----------------
+  function renderLineItemRows(items) {
+    return items.map((it) => `
+      <tr class="li-row">
+        <td><input class="li-desc" value="${esc(it.description)}" placeholder="Description"/></td>
+        <td><input class="li-qty" type="number" step="0.01" min="0" value="${it.quantity ?? 1}"/></td>
+        <td><input class="li-price" type="number" step="0.01" min="0" value="${it.unit_price ?? 0}"/></td>
+        <td class="li-total">R 0.00</td>
+        <td><button type="button" class="btn btn-danger btn-sm li-remove">×</button></td>
+      </tr>`).join('');
+  }
+  function addLineItemRow(tableBody, item) {
+    tableBody.insertAdjacentHTML('beforeend', renderLineItemRows([item || {}]));
+  }
+  function getLineItems(tableBody) {
+    return Array.from(tableBody.querySelectorAll('.li-row')).map((tr) => ({
+      description: tr.querySelector('.li-desc').value.trim(),
+      quantity: parseFloat(tr.querySelector('.li-qty').value) || 0,
+      unit_price: parseFloat(tr.querySelector('.li-price').value) || 0,
+    })).filter((i) => i.description);
+  }
+  /** Wires live recalculation; returns a `recalc()` function to call after adding/removing rows. */
+  function wireLineItemsTable(tableBody, subtotalEl, taxRateInput, taxAmountEl, grandTotalEl) {
+    function recalc() {
+      let subtotal = 0;
+      tableBody.querySelectorAll('.li-row').forEach((tr) => {
+        const qty = parseFloat(tr.querySelector('.li-qty').value) || 0;
+        const price = parseFloat(tr.querySelector('.li-price').value) || 0;
+        const lineTotal = qty * price;
+        subtotal += lineTotal;
+        tr.querySelector('.li-total').textContent = money(lineTotal);
+      });
+      if (subtotalEl) subtotalEl.textContent = money(subtotal);
+      if (taxRateInput && taxAmountEl && grandTotalEl) {
+        const rate = parseFloat(taxRateInput.value) || 0;
+        const tax = subtotal * rate / 100;
+        taxAmountEl.textContent = money(tax);
+        grandTotalEl.textContent = money(subtotal + tax);
+      }
+    }
+    tableBody.addEventListener('input', recalc);
+    tableBody.addEventListener('click', (e) => {
+      if (e.target.classList.contains('li-remove')) { e.target.closest('.li-row').remove(); recalc(); }
+    });
+    if (taxRateInput) taxRateInput.addEventListener('input', recalc);
+    recalc();
+    return recalc;
+  }
 
   // ---------------- router ----------------
-  const routes = { dashboard: renderDashboard, contacts: renderContacts, deals: renderDeals, tasks: renderTasks, programs: renderPrograms, users: renderUsers, settings: renderSettings };
+  const routes = { dashboard: renderDashboard, contacts: renderContacts, deals: renderDeals, calendar: renderCalendar, tasks: renderTasks, proposals: renderProposals, invoices: renderInvoices, expenses: renderExpenses, programs: renderPrograms, users: renderUsers, settings: renderSettings };
 
   function route() {
     const hash = (location.hash || '#/dashboard').replace(/^#\/?/, '');
@@ -440,19 +500,43 @@
   async function renderSettings() {
     const s = await get('settings.php');
     const isAdmin = window.CRM.currentUser.role === 'admin';
+    const dis = isAdmin ? '' : 'disabled';
     contentEl.innerHTML = `
-      <div class="card" style="max-width:520px">
-        <h3>Branding</h3>
-        <form id="settingsForm">
-          <div class="field"><label>Company Name</label><input name="company_name" value="${esc(s.company_name)}" ${isAdmin ? '' : 'disabled'}/></div>
-          <div class="field"><label>Tagline</label><input name="tagline" value="${esc(s.tagline)}" ${isAdmin ? '' : 'disabled'}/></div>
-          <div class="field-row">
-            <div class="field"><label>Primary Color</label><input type="color" name="primary_color" value="${s.primary_color || '#142850'}" ${isAdmin ? '' : 'disabled'}/></div>
-            <div class="field"><label>Accent Color</label><input type="color" name="accent_color" value="${s.accent_color || '#16C79A'}" ${isAdmin ? '' : 'disabled'}/></div>
+      <form id="settingsForm">
+        <div class="two-col">
+          <div class="card">
+            <h3>Branding</h3>
+            <div class="field"><label>Company Name</label><input name="company_name" value="${esc(s.company_name)}" ${dis}/></div>
+            <div class="field"><label>Tagline</label><input name="tagline" value="${esc(s.tagline)}" ${dis}/></div>
+            <div class="field-row">
+              <div class="field"><label>Primary Color</label><input type="color" name="primary_color" value="${s.primary_color || '#142850'}" ${dis}/></div>
+              <div class="field"><label>Accent Color</label><input type="color" name="accent_color" value="${s.accent_color || '#16C79A'}" ${dis}/></div>
+            </div>
           </div>
-          ${isAdmin ? '<div class="modal-actions" style="justify-content:flex-start"><button type="submit" class="btn btn-primary">Save Settings</button></div>' : '<p style="font-size:.72rem;color:var(--text-muted)">Only administrators can change branding settings.</p>'}
-        </form>
-      </div>`;
+          <div class="card">
+            <h3>Company Details (used on proposal/invoice letterheads)</h3>
+            <div class="field"><label>Address</label><input name="company_address" value="${esc(s.company_address)}" ${dis}/></div>
+            <div class="field-row">
+              <div class="field"><label>Phone</label><input name="company_phone" value="${esc(s.company_phone)}" ${dis}/></div>
+              <div class="field"><label>Email</label><input type="email" name="company_email" value="${esc(s.company_email)}" ${dis}/></div>
+            </div>
+            <div class="field-row">
+              <div class="field"><label>VAT Number</label><input name="vat_number" value="${esc(s.vat_number)}" ${dis}/></div>
+              <div class="field"><label>Default Tax Rate (%)</label><input type="number" step="0.01" name="default_tax_rate" value="${s.default_tax_rate || 15}" ${dis}/></div>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Banking Details (shown on invoices)</h3>
+            <div class="field"><label>Account Holder</label><input name="bank_account_holder" value="${esc(s.bank_account_holder)}" ${dis}/></div>
+            <div class="field"><label>Bank Name</label><input name="bank_name" value="${esc(s.bank_name)}" ${dis}/></div>
+            <div class="field-row">
+              <div class="field"><label>Account Number</label><input name="bank_account_number" value="${esc(s.bank_account_number)}" ${dis}/></div>
+              <div class="field"><label>Branch Code</label><input name="bank_branch_code" value="${esc(s.bank_branch_code)}" ${dis}/></div>
+            </div>
+          </div>
+        </div>
+        ${isAdmin ? '<div class="modal-actions" style="justify-content:flex-start;margin-top:6px"><button type="submit" class="btn btn-primary">Save Settings</button></div>' : '<p style="font-size:.72rem;color:var(--text-muted);margin-top:10px">Only administrators can change these settings.</p>'}
+      </form>`;
     if (isAdmin) {
       document.getElementById('settingsForm').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -465,6 +549,392 @@
         } catch (err) { alert(err.message); }
       });
     }
+  }
+
+  // ================= Calendar =================
+  let calendarViewDate = null;
+
+  async function renderCalendar() {
+    if (!calendarViewDate) calendarViewDate = new Date();
+    const year = calendarViewDate.getFullYear();
+    const month = calendarViewDate.getMonth();
+    const firstOfMonth = new Date(year, month, 1);
+    const lastOfMonth = new Date(year, month + 1, 0);
+    const gridStart = new Date(firstOfMonth); gridStart.setDate(gridStart.getDate() - gridStart.getDay());
+    const gridEnd = new Date(lastOfMonth); gridEnd.setDate(gridEnd.getDate() + (6 - gridEnd.getDay()));
+
+    const [events, contacts, deals] = await Promise.all([
+      get('calendar.php?start=' + ymd(gridStart) + '&end=' + ymd(gridEnd)),
+      get('contacts.php'), get('deals.php'),
+    ]);
+
+    const eventsByDay = {};
+    events.forEach((e) => { const day = e.start_datetime.slice(0, 10); (eventsByDay[day] = eventsByDay[day] || []).push(e); });
+
+    const monthLabel = firstOfMonth.toLocaleDateString('en-ZA', { month: 'long', year: 'numeric' });
+    const todayStr = ymd(new Date());
+
+    let cells = '';
+    for (let d = new Date(gridStart); d <= gridEnd; d.setDate(d.getDate() + 1)) {
+      const dayStr = ymd(d);
+      const inMonth = d.getMonth() === month;
+      const dayEvents = eventsByDay[dayStr] || [];
+      cells += `<div class="cal-cell${inMonth ? '' : ' outside'}${dayStr === todayStr ? ' today' : ''}" data-date="${dayStr}">
+        <div class="cal-daynum">${d.getDate()}</div>
+        ${dayEvents.slice(0, 3).map((e) => `<div class="cal-event" data-id="${e.id}">${esc(e.title)}</div>`).join('')}
+        ${dayEvents.length > 3 ? `<div class="cal-more">+${dayEvents.length - 3} more</div>` : ''}
+      </div>`;
+    }
+
+    contentEl.innerHTML = `
+      <div class="toolbar">
+        <div style="display:flex;align-items:center;gap:10px">
+          <button class="btn btn-outline btn-sm" id="calPrev">‹</button>
+          <strong style="color:var(--brand-primary);min-width:140px;display:inline-block">${monthLabel}</strong>
+          <button class="btn btn-outline btn-sm" id="calNext">›</button>
+          <button class="btn btn-outline btn-sm" id="calToday">Today</button>
+        </div>
+        <button class="btn btn-primary" id="addEventBtn">+ Add Event</button>
+      </div>
+      <div class="card">
+        <div class="cal-weekdays">${WEEKDAY_LABELS.map((d) => `<div>${d}</div>`).join('')}</div>
+        <div class="cal-grid">${cells}</div>
+      </div>`;
+
+    document.getElementById('calPrev').addEventListener('click', () => { calendarViewDate = new Date(year, month - 1, 1); renderCalendar(); });
+    document.getElementById('calNext').addEventListener('click', () => { calendarViewDate = new Date(year, month + 1, 1); renderCalendar(); });
+    document.getElementById('calToday').addEventListener('click', () => { calendarViewDate = new Date(); renderCalendar(); });
+    document.getElementById('addEventBtn').addEventListener('click', () => openEventModal(null, contacts, deals, todayStr));
+
+    contentEl.querySelectorAll('.cal-event').forEach((el) => el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openEventModal(events.find((x) => x.id == el.dataset.id), contacts, deals);
+    }));
+    contentEl.querySelectorAll('.cal-cell').forEach((cell) => cell.addEventListener('click', () => openEventModal(null, contacts, deals, cell.dataset.date)));
+  }
+
+  function openEventModal(ev, contacts, deals, defaultDate) {
+    ev = ev || {};
+    const startVal = ev.start_datetime ? ev.start_datetime.replace(' ', 'T').slice(0, 16) : (defaultDate ? defaultDate + 'T09:00' : '');
+    const endVal = ev.end_datetime ? ev.end_datetime.replace(' ', 'T').slice(0, 16) : '';
+    openModal(`
+      <h2>${ev.id ? 'Edit Event' : 'Add Event'}</h2>
+      <form id="eventForm">
+        <div class="field"><label>Title *</label><input name="title" required value="${esc(ev.title)}"/></div>
+        <div class="field-row">
+          <div class="field"><label>Start *</label><input type="datetime-local" name="start_datetime" required value="${startVal}"/></div>
+          <div class="field"><label>End</label><input type="datetime-local" name="end_datetime" value="${endVal}"/></div>
+        </div>
+        <div class="field"><label>Location</label><input name="location" value="${esc(ev.location)}"/></div>
+        <div class="field-row">
+          <div class="field"><label>Contact</label><select name="contact_id">${optionList(contacts, 'id', 'name', ev.contact_id)}</select></div>
+          <div class="field"><label>Deal</label><select name="deal_id">${optionList(deals, 'id', 'title', ev.deal_id)}</select></div>
+        </div>
+        <div class="field"><label>Description</label><textarea name="description">${esc(ev.description)}</textarea></div>
+        <div class="modal-actions">
+          ${ev.id ? '<button type="button" class="btn btn-danger" id="deleteEventBtn" style="margin-right:auto">Delete</button>' : ''}
+          <button type="button" class="btn btn-outline" id="cancelBtn">Cancel</button><button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>`);
+    document.getElementById('cancelBtn').addEventListener('click', closeModal);
+    if (ev.id) document.getElementById('deleteEventBtn').addEventListener('click', async () => {
+      if (!confirm('Delete this event?')) return;
+      await del('calendar.php?id=' + ev.id); closeModal(); toast('Event deleted.'); renderCalendar();
+    });
+    document.getElementById('eventForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const body = Object.fromEntries(new FormData(e.target).entries());
+      body.start_datetime = body.start_datetime.replace('T', ' ');
+      if (body.end_datetime) body.end_datetime = body.end_datetime.replace('T', ' ');
+      try {
+        if (ev.id) await put('calendar.php?id=' + ev.id, body); else await post('calendar.php', body);
+        closeModal(); toast('Event saved.'); renderCalendar();
+      } catch (err) { alert(err.message); }
+    });
+  }
+
+  // ================= Proposals =================
+  async function renderProposals() {
+    const [proposals, contacts, deals] = await Promise.all([get('proposals.php'), get('contacts.php'), get('deals.php')]);
+    contentEl.innerHTML = `
+      <div class="toolbar"><div></div><button class="btn btn-primary" id="addProposalBtn">+ New Proposal</button></div>
+      <div class="card table-wrap">
+        <table><thead><tr><th>Number</th><th>Title</th><th>Contact</th><th>Status</th><th>Total</th><th>Valid Until</th><th></th></tr></thead>
+        <tbody>${proposals.length ? proposals.map((p) => `
+          <tr><td><strong>${esc(p.proposal_number)}</strong></td><td>${esc(p.title)}</td>
+          <td>${esc(p.contact_name) || '—'}</td>
+          <td><span class="pill pill-${statusPillClass(p.status)}">${esc(p.status)}</span></td>
+          <td>${money(p.total)}</td><td>${fmtDate(p.valid_until)}</td>
+          <td class="row-actions">
+            <a class="btn btn-outline btn-sm" href="proposal_print.php?id=${p.id}" target="_blank" rel="noopener">View</a>
+            ${p.status === 'accepted' ? `<button class="btn btn-outline btn-sm" data-convert="${p.id}">To Invoice</button>` : ''}
+            <button class="btn btn-outline btn-sm" data-edit="${p.id}">Edit</button>
+            <button class="btn btn-danger btn-sm" data-del="${p.id}">Delete</button>
+          </td></tr>
+        `).join('') : `<tr><td colspan="7"><div class="empty">No proposals yet.</div></td></tr>`}</tbody></table>
+      </div>`;
+
+    document.getElementById('addProposalBtn').addEventListener('click', () => openProposalModal(null, contacts, deals));
+    contentEl.querySelectorAll('[data-edit]').forEach((btn) => btn.addEventListener('click', async () => openProposalModal(await get('proposals.php?id=' + btn.dataset.edit), contacts, deals)));
+    contentEl.querySelectorAll('[data-del]').forEach((btn) => btn.addEventListener('click', async () => {
+      if (!confirm('Delete this proposal?')) return;
+      await del('proposals.php?id=' + btn.dataset.del); toast('Proposal deleted.'); renderProposals();
+    }));
+    contentEl.querySelectorAll('[data-convert]').forEach((btn) => btn.addEventListener('click', async () => {
+      if (!confirm('Create a draft invoice from this accepted proposal?')) return;
+      try {
+        const res = await post('invoices.php', { from_proposal_id: btn.dataset.convert });
+        toast('Invoice ' + res.invoice_number + ' created.');
+        location.hash = '#/invoices';
+      } catch (err) { alert(err.message); }
+    }));
+  }
+
+  function openProposalModal(p, contacts, deals) {
+    p = p || {};
+    const items = p.items && p.items.length ? p.items : [{}];
+    openModal(`
+      <h2 style="margin-bottom:4px">${p.id ? 'Edit Proposal' : 'New Proposal'}</h2>
+      ${p.id ? `<div style="font-size:.72rem;color:var(--text-muted);margin-bottom:12px">${esc(p.proposal_number)}</div>` : ''}
+      <form id="proposalForm">
+        <div class="field"><label>Title *</label><input name="title" required value="${esc(p.title)}"/></div>
+        <div class="field-row">
+          <div class="field"><label>Contact</label><select name="contact_id">${optionList(contacts, 'id', 'name', p.contact_id)}</select></div>
+          <div class="field"><label>Deal</label><select name="deal_id">${optionList(deals, 'id', 'title', p.deal_id)}</select></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Status</label><select name="status">${PROPOSAL_STATUSES.map((s) => `<option${s === (p.status || 'draft') ? ' selected' : ''}>${s}</option>`).join('')}</select></div>
+          <div class="field"><label>Valid Until</label><input type="date" name="valid_until" value="${p.valid_until || ''}"/></div>
+        </div>
+        <div class="field"><label>Intro / Cover Note</label><textarea name="intro_text">${esc(p.intro_text)}</textarea></div>
+        <div class="field"><label>Line Items</label>
+          <div class="table-wrap"><table class="li-table"><thead><tr><th>Description</th><th style="width:70px">Qty</th><th style="width:110px">Unit Price</th><th style="width:90px">Total</th><th></th></tr></thead>
+          <tbody id="lineItems">${renderLineItemRows(items)}</tbody></table></div>
+          <button type="button" class="btn btn-outline btn-sm" id="addLineBtn" style="margin-top:8px">+ Add Line</button>
+          <div style="text-align:right;margin-top:8px;font-weight:800;color:var(--brand-primary)">Total: <span id="docSubtotal">R 0.00</span></div>
+        </div>
+        <div class="modal-actions"><button type="button" class="btn btn-outline" id="cancelBtn">Cancel</button><button type="submit" class="btn btn-primary">Save</button></div>
+      </form>`);
+
+    const table = document.getElementById('lineItems');
+    const recalc = wireLineItemsTable(table, document.getElementById('docSubtotal'));
+    document.getElementById('addLineBtn').addEventListener('click', () => { addLineItemRow(table, {}); recalc(); });
+    document.getElementById('cancelBtn').addEventListener('click', closeModal);
+    document.getElementById('proposalForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const body = Object.fromEntries(new FormData(e.target).entries());
+      body.items = getLineItems(table);
+      try {
+        if (p.id) await put('proposals.php?id=' + p.id, body); else await post('proposals.php', body);
+        closeModal(); toast('Proposal saved.'); renderProposals();
+      } catch (err) { alert(err.message); }
+    });
+  }
+
+  // ================= Invoices =================
+  async function renderInvoices() {
+    const [invoices, contacts, deals] = await Promise.all([get('invoices.php'), get('contacts.php'), get('deals.php')]);
+    contentEl.innerHTML = `
+      <div class="toolbar"><div></div><button class="btn btn-primary" id="addInvoiceBtn">+ New Invoice</button></div>
+      <div class="card table-wrap">
+        <table><thead><tr><th>Number</th><th>Contact</th><th>Status</th><th>Total (incl. VAT)</th><th>Due</th><th></th></tr></thead>
+        <tbody>${invoices.length ? invoices.map((inv) => `
+          <tr><td><strong>${esc(inv.invoice_number)}</strong></td>
+          <td>${esc(inv.contact_name) || '—'}</td>
+          <td><span class="pill pill-${statusPillClass(inv.is_overdue ? 'overdue' : inv.status)}">${inv.is_overdue ? 'overdue' : esc(inv.status)}</span></td>
+          <td>${money(inv.total)}</td><td>${fmtDate(inv.due_date)}</td>
+          <td class="row-actions">
+            <a class="btn btn-outline btn-sm" href="invoice_print.php?id=${inv.id}" target="_blank" rel="noopener">View</a>
+            ${inv.status !== 'paid' ? `<button class="btn btn-outline btn-sm" data-paid="${inv.id}">Mark Paid</button>` : ''}
+            <button class="btn btn-outline btn-sm" data-edit="${inv.id}">Edit</button>
+            <button class="btn btn-danger btn-sm" data-del="${inv.id}">Delete</button>
+          </td></tr>
+        `).join('') : `<tr><td colspan="6"><div class="empty">No invoices yet.</div></td></tr>`}</tbody></table>
+      </div>`;
+
+    document.getElementById('addInvoiceBtn').addEventListener('click', () => openInvoiceModal(null, contacts, deals));
+    contentEl.querySelectorAll('[data-edit]').forEach((btn) => btn.addEventListener('click', async () => openInvoiceModal(await get('invoices.php?id=' + btn.dataset.edit), contacts, deals)));
+    contentEl.querySelectorAll('[data-del]').forEach((btn) => btn.addEventListener('click', async () => {
+      if (!confirm('Delete this invoice?')) return;
+      await del('invoices.php?id=' + btn.dataset.del); toast('Invoice deleted.'); renderInvoices();
+    }));
+    contentEl.querySelectorAll('[data-paid]').forEach((btn) => btn.addEventListener('click', async () => {
+      await put('invoices.php?id=' + btn.dataset.paid, { status: 'paid' });
+      toast('Invoice marked as paid.'); renderInvoices();
+    }));
+  }
+
+  function openInvoiceModal(inv, contacts, deals) {
+    inv = inv || {};
+    const items = inv.items && inv.items.length ? inv.items : [{}];
+    openModal(`
+      <h2 style="margin-bottom:4px">${inv.id ? 'Edit Invoice' : 'New Invoice'}</h2>
+      ${inv.id ? `<div style="font-size:.72rem;color:var(--text-muted);margin-bottom:12px">${esc(inv.invoice_number)}</div>` : ''}
+      <form id="invoiceForm">
+        <div class="field-row">
+          <div class="field"><label>Contact</label><select name="contact_id">${optionList(contacts, 'id', 'name', inv.contact_id)}</select></div>
+          <div class="field"><label>Deal</label><select name="deal_id">${optionList(deals, 'id', 'title', inv.deal_id)}</select></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Issue Date</label><input type="date" name="issue_date" value="${inv.issue_date || ymd(new Date())}"/></div>
+          <div class="field"><label>Due Date</label><input type="date" name="due_date" value="${inv.due_date || ''}"/></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Status</label><select name="status">${INVOICE_STATUSES.map((s) => `<option${s === (inv.status || 'draft') ? ' selected' : ''}>${s}</option>`).join('')}</select></div>
+          <div class="field"><label>Tax Rate (%)</label><input type="number" step="0.01" id="taxRateInput" name="tax_rate" value="${inv.tax_rate ?? 15}"/></div>
+        </div>
+        <div class="field"><label>Notes</label><textarea name="notes">${esc(inv.notes)}</textarea></div>
+        <div class="field"><label>Line Items</label>
+          <div class="table-wrap"><table class="li-table"><thead><tr><th>Description</th><th style="width:70px">Qty</th><th style="width:110px">Unit Price</th><th style="width:90px">Total</th><th></th></tr></thead>
+          <tbody id="lineItems">${renderLineItemRows(items)}</tbody></table></div>
+          <button type="button" class="btn btn-outline btn-sm" id="addLineBtn" style="margin-top:8px">+ Add Line</button>
+          <div style="text-align:right;margin-top:8px;font-size:.82rem">
+            <div>Subtotal: <span id="docSubtotal">R 0.00</span></div>
+            <div>VAT: <span id="docTax">R 0.00</span></div>
+            <div style="font-weight:800;color:var(--brand-primary);font-size:1rem">Total: <span id="docGrandTotal">R 0.00</span></div>
+          </div>
+        </div>
+        <div class="modal-actions"><button type="button" class="btn btn-outline" id="cancelBtn">Cancel</button><button type="submit" class="btn btn-primary">Save</button></div>
+      </form>`);
+
+    const table = document.getElementById('lineItems');
+    const recalc = wireLineItemsTable(table, document.getElementById('docSubtotal'), document.getElementById('taxRateInput'), document.getElementById('docTax'), document.getElementById('docGrandTotal'));
+    document.getElementById('addLineBtn').addEventListener('click', () => { addLineItemRow(table, {}); recalc(); });
+    document.getElementById('cancelBtn').addEventListener('click', closeModal);
+    document.getElementById('invoiceForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const body = Object.fromEntries(new FormData(e.target).entries());
+      body.items = getLineItems(table);
+      try {
+        if (inv.id) await put('invoices.php?id=' + inv.id, body); else await post('invoices.php', body);
+        closeModal(); toast('Invoice saved.'); renderInvoices();
+      } catch (err) { alert(err.message); }
+    });
+  }
+
+  // ================= Expenses (incl. "Scan a Slip" receipt capture) =================
+  async function renderExpenses(filter) {
+    filter = filter || 'all';
+    const expenses = await get('expenses.php' + (filter !== 'all' ? '?status=' + filter : ''));
+    contentEl.innerHTML = `
+      <div class="toolbar">
+        <select class="filter" id="expenseFilter">
+          <option value="all"${filter === 'all' ? ' selected' : ''}>All Expenses</option>
+          <option value="pending"${filter === 'pending' ? ' selected' : ''}>Pending</option>
+          <option value="approved"${filter === 'approved' ? ' selected' : ''}>Approved</option>
+          <option value="reimbursed"${filter === 'reimbursed' ? ' selected' : ''}>Reimbursed</option>
+        </select>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-outline" id="scanSlipBtn">📷 Scan a Slip</button>
+          <button class="btn btn-primary" id="addExpenseBtn">+ Add Expense</button>
+        </div>
+      </div>
+      <div class="card table-wrap">
+        <table><thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Vendor</th><th>Amount</th><th>Status</th><th>Receipt</th><th></th></tr></thead>
+        <tbody>${expenses.length ? expenses.map((ex) => `
+          <tr><td>${fmtDate(ex.expense_date)}</td><td>${esc(ex.description)}</td><td><span class="pill pill-navy">${esc(ex.category)}</span></td>
+          <td>${esc(ex.vendor) || '—'}</td><td>${money(ex.amount)}</td>
+          <td><span class="pill pill-${statusPillClass(ex.status)}">${esc(ex.status)}</span></td>
+          <td>${ex.receipt_path ? `<a href="download_receipt.php?expense_id=${ex.id}" target="_blank" rel="noopener">View</a>` : '—'}</td>
+          <td class="row-actions">
+            ${window.CRM.currentUser.role === 'admin' && ex.status === 'pending' ? `<button class="btn btn-outline btn-sm" data-approve="${ex.id}">Approve</button>` : ''}
+            ${window.CRM.currentUser.role === 'admin' && ex.status === 'approved' ? `<button class="btn btn-outline btn-sm" data-reimburse="${ex.id}">Reimburse</button>` : ''}
+            <button class="btn btn-outline btn-sm" data-edit="${ex.id}">Edit</button>
+            <button class="btn btn-danger btn-sm" data-del="${ex.id}">Delete</button>
+          </td></tr>
+        `).join('') : `<tr><td colspan="8"><div class="empty">No expenses in this view.</div></td></tr>`}</tbody></table>
+      </div>`;
+
+    document.getElementById('expenseFilter').addEventListener('change', (e) => renderExpenses(e.target.value));
+    document.getElementById('addExpenseBtn').addEventListener('click', () => openExpenseModal(null, null, filter));
+    document.getElementById('scanSlipBtn').addEventListener('click', () => openScanSlipModal(filter));
+    contentEl.querySelectorAll('[data-edit]').forEach((btn) => btn.addEventListener('click', () => openExpenseModal(expenses.find((x) => x.id == btn.dataset.edit), null, filter)));
+    contentEl.querySelectorAll('[data-del]').forEach((btn) => btn.addEventListener('click', async () => {
+      if (!confirm('Delete this expense?')) return;
+      try { await del('expenses.php?id=' + btn.dataset.del); toast('Expense deleted.'); renderExpenses(filter); }
+      catch (err) { alert(err.message); }
+    }));
+    contentEl.querySelectorAll('[data-approve]').forEach((btn) => btn.addEventListener('click', async () => {
+      await put('expenses.php?id=' + btn.dataset.approve, { status: 'approved' }); toast('Expense approved.'); renderExpenses(filter);
+    }));
+    contentEl.querySelectorAll('[data-reimburse]').forEach((btn) => btn.addEventListener('click', async () => {
+      await put('expenses.php?id=' + btn.dataset.reimburse, { status: 'reimbursed' }); toast('Expense marked reimbursed.'); renderExpenses(filter);
+    }));
+  }
+
+  /** Camera-capture flow: pick/photograph a slip, upload it, run best-effort
+   *  OCR, then hand off to the normal (editable) expense form pre-filled
+   *  with whatever was recognised. */
+  function openScanSlipModal(filter) {
+    openModal(`
+      <h2>Scan a Slip</h2>
+      <p style="font-size:.8rem;color:var(--text-muted);margin-bottom:16px">Take a photo of a receipt with your phone, or choose an existing photo. We'll try to read the amount, date and vendor automatically — you can always correct them before saving.</p>
+      <div class="field">
+        <label>Receipt Photo</label>
+        <input type="file" id="slipFile" accept="image/*" capture="environment"/>
+      </div>
+      <div id="scanStatus" style="font-size:.8rem;color:var(--text-muted)"></div>
+      <div class="modal-actions"><button type="button" class="btn btn-outline" id="cancelBtn">Cancel</button></div>`);
+    document.getElementById('cancelBtn').addEventListener('click', closeModal);
+    document.getElementById('slipFile').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const statusEl = document.getElementById('scanStatus');
+      statusEl.textContent = 'Reading receipt…';
+      const fd = new FormData();
+      fd.append('receipt', file);
+      try {
+        const res = await fetch(window.CRM.apiBase + 'expenses_upload.php', {
+          method: 'POST', credentials: 'same-origin',
+          headers: { 'X-CSRF-Token': window.CRM.csrfToken },
+          body: fd,
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Upload failed.');
+        closeModal();
+        openExpenseModal(null, data, filter);
+      } catch (err) {
+        statusEl.textContent = 'Error: ' + err.message;
+      }
+    });
+  }
+
+  function openExpenseModal(ex, scanResult, filter) {
+    ex = ex || {};
+    const guess = scanResult ? scanResult.guess : null;
+    const receiptPath = ex.receipt_path || (scanResult ? scanResult.receipt_path : '');
+    openModal(`
+      <h2>${ex.id ? 'Edit Expense' : 'Add Expense'}</h2>
+      ${scanResult && !scanResult.ocr_available ? '<p style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">Automatic text recognition isn\'t available on this server — the photo has been attached, please fill in the details below.</p>' : ''}
+      ${scanResult && scanResult.ocr_available && !guess.raw_text ? '<p style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">Couldn\'t read this receipt automatically — the photo has been attached, please fill in the details below.</p>' : ''}
+      <form id="expenseForm">
+        <input type="hidden" name="receipt_path" value="${esc(receiptPath)}"/>
+        <div class="field"><label>Description *</label><input name="description" required value="${esc(ex.description || (guess && guess.vendor ? 'Purchase at ' + guess.vendor : ''))}"/></div>
+        <div class="field-row">
+          <div class="field"><label>Amount (ZAR) *</label><input type="number" step="0.01" min="0.01" name="amount" required value="${ex.amount || (guess && guess.amount) || ''}"/></div>
+          <div class="field"><label>Date *</label><input type="date" name="expense_date" required value="${ex.expense_date || (guess && guess.date) || ymd(new Date())}"/></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Category</label><select name="category">${EXPENSE_CATEGORIES.map((c) => `<option${c === (ex.category || 'Other') ? ' selected' : ''}>${c}</option>`).join('')}</select></div>
+          <div class="field"><label>Payment Method</label><select name="payment_method">${EXPENSE_PAYMENT_METHODS.map((m) => `<option${m === (ex.payment_method || 'Card') ? ' selected' : ''}>${m}</option>`).join('')}</select></div>
+        </div>
+        <div class="field"><label>Vendor</label><input name="vendor" value="${esc(ex.vendor || (guess && guess.vendor) || '')}"/></div>
+        <div class="field"><label>Notes</label><textarea name="notes">${esc(ex.notes)}</textarea></div>
+        ${receiptPath ? (ex.id
+          ? `<div class="field"><label>Receipt</label><a href="download_receipt.php?expense_id=${ex.id}" target="_blank" rel="noopener">📎 View photo</a></div>`
+          : `<div class="field"><label>Receipt</label><span style="font-size:.8rem;color:var(--text-muted)">📎 Photo attached — viewable once saved</span></div>`
+        ) : ''}
+        <div class="modal-actions"><button type="button" class="btn btn-outline" id="cancelBtn">Cancel</button><button type="submit" class="btn btn-primary">Save</button></div>
+      </form>`);
+    document.getElementById('cancelBtn').addEventListener('click', closeModal);
+    document.getElementById('expenseForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const body = Object.fromEntries(new FormData(e.target).entries());
+      try {
+        if (ex.id) await put('expenses.php?id=' + ex.id, body); else await post('expenses.php', body);
+        closeModal(); toast('Expense saved.'); renderExpenses(filter);
+      } catch (err) { alert(err.message); }
+    });
   }
 
   route();

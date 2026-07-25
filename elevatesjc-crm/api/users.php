@@ -18,7 +18,8 @@ if ($method === 'POST') {
     $email = trim((string)($b['email'] ?? ''));
     $username = trim((string)($b['username'] ?? ''));
     $password = (string)($b['password'] ?? '');
-    $role = in_array($b['role'] ?? 'user', ['admin', 'user'], true) ? $b['role'] : 'user';
+    $roleIn = $b['role'] ?? 'user';
+    $role = in_array($roleIn, ['admin', 'user'], true) ? $roleIn : 'user';
 
     if ($name === '') json_error('Name is required.', 422);
     if ($email === '' && $username === '') json_error('Provide at least an email (for Microsoft sign-in) or a username (for local sign-in).', 422);
@@ -50,7 +51,8 @@ if ($method === 'PUT') {
 
     $name = trim((string)($b['name'] ?? ''));
     $email = trim((string)($b['email'] ?? ''));
-    $role = in_array($b['role'] ?? 'user', ['admin', 'user'], true) ? $b['role'] : 'user';
+    $roleIn = $b['role'] ?? 'user';
+    $role = in_array($roleIn, ['admin', 'user'], true) ? $roleIn : 'user';
     $active = !empty($b['active']) ? 1 : 0;
     if ($name === '') json_error('Name is required.', 422);
 

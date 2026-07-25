@@ -38,7 +38,11 @@ $csrf = csrf_token();
       <a class="nav-item" data-route="dashboard" href="#/dashboard"><span class="nav-ic">📊</span>Dashboard</a>
       <a class="nav-item" data-route="contacts" href="#/contacts"><span class="nav-ic">👤</span>Contacts</a>
       <a class="nav-item" data-route="deals" href="#/deals"><span class="nav-ic">💼</span>Pipeline</a>
+      <a class="nav-item" data-route="calendar" href="#/calendar"><span class="nav-ic">📅</span>Calendar</a>
       <a class="nav-item" data-route="tasks" href="#/tasks"><span class="nav-ic">✅</span>Tasks</a>
+      <a class="nav-item" data-route="proposals" href="#/proposals"><span class="nav-ic">📝</span>Proposals</a>
+      <a class="nav-item" data-route="invoices" href="#/invoices"><span class="nav-ic">🧾</span>Invoicing</a>
+      <a class="nav-item" data-route="expenses" href="#/expenses"><span class="nav-ic">🧮</span>Expenses</a>
       <a class="nav-item" data-route="programs" href="#/programs"><span class="nav-ic">🎓</span>Programs</a>
       <?php if ($user['role'] === 'admin'): ?>
       <a class="nav-item" data-route="users" href="#/users"><span class="nav-ic">🔐</span>Users</a>

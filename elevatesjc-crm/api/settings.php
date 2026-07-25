@@ -6,7 +6,11 @@ require_login_api();
 $pdo = db();
 $method = $_SERVER['REQUEST_METHOD'];
 
-const ALLOWED_SETTINGS = ['company_name', 'tagline', 'primary_color', 'accent_color'];
+const ALLOWED_SETTINGS = [
+    'company_name', 'tagline', 'primary_color', 'accent_color',
+    'company_address', 'company_phone', 'company_email', 'vat_number',
+    'default_tax_rate', 'bank_name', 'bank_account_holder', 'bank_account_number', 'bank_branch_code',
+];
 
 if ($method === 'GET') {
     $rows = $pdo->query('SELECT setting_key, setting_value FROM settings')->fetchAll();

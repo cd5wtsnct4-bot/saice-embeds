@@ -30,7 +30,8 @@ if ($method === 'POST') {
     $b = json_body();
     $title = trim((string)($b['title'] ?? ''));
     if ($title === '') json_error('Title is required.', 422);
-    $priority = in_array($b['priority'] ?? 'medium', ['low', 'medium', 'high'], true) ? $b['priority'] : 'medium';
+    $priorityIn = $b['priority'] ?? 'medium';
+    $priority = in_array($priorityIn, ['low', 'medium', 'high'], true) ? $priorityIn : 'medium';
 
     $stmt = $pdo->prepare('INSERT INTO tasks (title, due_date, priority, contact_id, deal_id, notes) VALUES (?,?,?,?,?,?)');
     $stmt->execute([
@@ -59,7 +60,8 @@ if ($method === 'PUT') {
 
     $title = trim((string)($b['title'] ?? ''));
     if ($title === '') json_error('Title is required.', 422);
-    $priority = in_array($b['priority'] ?? 'medium', ['low', 'medium', 'high'], true) ? $b['priority'] : 'medium';
+    $priorityIn = $b['priority'] ?? 'medium';
+    $priority = in_array($priorityIn, ['low', 'medium', 'high'], true) ? $priorityIn : 'medium';
 
     $stmt = $pdo->prepare('UPDATE tasks SET title=?, due_date=?, priority=?, done=?, contact_id=?, deal_id=?, notes=? WHERE id=?');
     $stmt->execute([

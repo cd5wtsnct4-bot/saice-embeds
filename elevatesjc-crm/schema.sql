@@ -101,6 +101,124 @@ CREATE TABLE IF NOT EXISTS settings (
   setting_value VARCHAR(500) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- ---------------------------------------------------------------
+-- calendar_events — meetings, training sessions, follow-up calls
+-- ---------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS calendar_events (
+  id             INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  title          VARCHAR(200) NOT NULL,
+  description    TEXT NULL,
+  start_datetime DATETIME NOT NULL,
+  end_datetime   DATETIME NULL,
+  all_day        TINYINT(1) NOT NULL DEFAULT 0,
+  location       VARCHAR(200) NULL,
+  contact_id     INT UNSIGNED NULL,
+  deal_id        INT UNSIGNED NULL,
+  created_by     INT UNSIGNED NULL,
+  created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_cal_contact FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE SET NULL,
+  CONSTRAINT fk_cal_deal    FOREIGN KEY (deal_id)    REFERENCES deals(id)    ON DELETE SET NULL,
+  CONSTRAINT fk_cal_user    FOREIGN KEY (created_by) REFERENCES users(id)   ON DELETE SET NULL,
+  INDEX idx_cal_start (start_datetime)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ---------------------------------------------------------------
+-- document_counters — atomic per-year sequence source for
+-- invoice/proposal numbers (see includes/numbering.php)
+-- ---------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS document_counters (
+  counter_key VARCHAR(20) PRIMARY KEY,
+  year        INT NOT NULL,
+  next_seq    INT NOT NULL DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ---------------------------------------------------------------
+-- proposals + line items
+-- ---------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS proposals (
+  id               INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  proposal_number  VARCHAR(30) NOT NULL UNIQUE,
+  deal_id          INT UNSIGNED NULL,
+  contact_id       INT UNSIGNED NULL,
+  title            VARCHAR(200) NOT NULL,
+  status           ENUM('draft','sent','accepted','declined') NOT NULL DEFAULT 'draft',
+  intro_text       TEXT NULL,
+  valid_until      DATE NULL,
+  created_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  sent_at          DATETIME NULL,
+  CONSTRAINT fk_prop_deal    FOREIGN KEY (deal_id)    REFERENCES deals(id)    ON DELETE SET NULL,
+  CONSTRAINT fk_prop_contact FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS proposal_items (
+  id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  proposal_id  INT UNSIGNED NOT NULL,
+  description  VARCHAR(255) NOT NULL,
+  quantity     DECIMAL(10,2) NOT NULL DEFAULT 1,
+  unit_price   DECIMAL(12,2) NOT NULL DEFAULT 0,
+  sort_order   INT UNSIGNED NOT NULL DEFAULT 0,
+  CONSTRAINT fk_propitem_proposal FOREIGN KEY (proposal_id) REFERENCES proposals(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ---------------------------------------------------------------
+-- invoices + line items
+-- ---------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS invoices (
+  id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  invoice_number  VARCHAR(30) NOT NULL UNIQUE,
+  proposal_id     INT UNSIGNED NULL,
+  deal_id         INT UNSIGNED NULL,
+  contact_id      INT UNSIGNED NULL,
+  status          ENUM('draft','sent','paid','overdue','cancelled') NOT NULL DEFAULT 'draft',
+  issue_date      DATE NOT NULL,
+  due_date        DATE NULL,
+  tax_rate        DECIMAL(5,2) NOT NULL DEFAULT 15.00,
+  notes           TEXT NULL,
+  paid_at         DATE NULL,
+  created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_inv_proposal FOREIGN KEY (proposal_id) REFERENCES proposals(id) ON DELETE SET NULL,
+  CONSTRAINT fk_inv_deal     FOREIGN KEY (deal_id)     REFERENCES deals(id)     ON DELETE SET NULL,
+  CONSTRAINT fk_inv_contact  FOREIGN KEY (contact_id)  REFERENCES contacts(id)  ON DELETE SET NULL,
+  INDEX idx_inv_status (status),
+  INDEX idx_inv_due (due_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS invoice_items (
+  id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  invoice_id   INT UNSIGNED NOT NULL,
+  description  VARCHAR(255) NOT NULL,
+  quantity     DECIMAL(10,2) NOT NULL DEFAULT 1,
+  unit_price   DECIMAL(12,2) NOT NULL DEFAULT 0,
+  sort_order   INT UNSIGNED NOT NULL DEFAULT 0,
+  CONSTRAINT fk_invitem_invoice FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ---------------------------------------------------------------
+-- expenses — incl. scanned receipt/slip attachment + best-effort OCR text
+-- ---------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS expenses (
+  id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  description     VARCHAR(255) NOT NULL,
+  category        ENUM('Travel','Venue & Catering','Materials','Software & Subscriptions','Subsistence','Other') NOT NULL DEFAULT 'Other',
+  amount          DECIMAL(12,2) NOT NULL DEFAULT 0,
+  expense_date    DATE NOT NULL,
+  vendor          VARCHAR(150) NULL,
+  payment_method  ENUM('Card','Cash','EFT','Other') NOT NULL DEFAULT 'Card',
+  notes           TEXT NULL,
+  receipt_path    VARCHAR(255) NULL,
+  ocr_text        MEDIUMTEXT NULL,
+  status          ENUM('pending','approved','reimbursed') NOT NULL DEFAULT 'pending',
+  deal_id         INT UNSIGNED NULL,
+  submitted_by    INT UNSIGNED NULL,
+  created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_exp_deal FOREIGN KEY (deal_id) REFERENCES deals(id) ON DELETE SET NULL,
+  CONSTRAINT fk_exp_user FOREIGN KEY (submitted_by) REFERENCES users(id) ON DELETE SET NULL,
+  INDEX idx_exp_date (expense_date),
+  INDEX idx_exp_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ============================================================
@@ -144,4 +262,40 @@ INSERT INTO settings (setting_key, setting_value) VALUES
 ('company_name', 'Elevate SJC'),
 ('tagline', 'Driving performance. Unlocking potential.'),
 ('primary_color', '#142850'),
-('accent_color', '#16C79A');
+('accent_color', '#16C79A'),
+('company_address', '123 Example Street, Johannesburg, 2000'),
+('company_phone', '011 000 0000'),
+('company_email', 'info@elevatesjc.co.za'),
+('vat_number', ''),
+('default_tax_rate', '15.00'),
+('bank_name', ''),
+('bank_account_holder', 'Elevate SJC'),
+('bank_account_number', ''),
+('bank_branch_code', '');
+
+INSERT INTO calendar_events (title, description, start_datetime, end_datetime, location, contact_id, deal_id) VALUES
+('Ilanga Municipal — Proposal Walkthrough', 'Sample event — present the leadership cohort proposal to procurement.', DATE_ADD(NOW(), INTERVAL 3 DAY), DATE_ADD(NOW(), INTERVAL 3 DAY) + INTERVAL 1 HOUR, 'MS Teams', 1, 1),
+('Kestrel Logistics — Scoping Call', 'Sample event — confirm cohort size and dates for the data analytics bootcamp.', DATE_ADD(NOW(), INTERVAL 1 DAY), DATE_ADD(NOW(), INTERVAL 1 DAY) + INTERVAL 30 MINUTE, 'Phone', 2, 2);
+
+INSERT INTO document_counters (counter_key, year, next_seq) VALUES
+('proposal', YEAR(CURDATE()), 2),
+('invoice', YEAR(CURDATE()), 2);
+
+INSERT INTO proposals (proposal_number, deal_id, contact_id, title, status, intro_text, valid_until) VALUES
+(CONCAT('PRO-', YEAR(CURDATE()), '-0001'), 1, 1, 'Leadership Cohort Training Proposal', 'sent', 'Sample proposal — thank you for considering Elevate SJC for your leadership development needs.', DATE_ADD(CURDATE(), INTERVAL 30 DAY));
+
+INSERT INTO proposal_items (proposal_id, description, quantity, unit_price, sort_order) VALUES
+(1, 'Leadership Development Programme — 25 delegates', 25, 7400.00, 1),
+(1, 'Post-programme coaching (3 sessions)', 1, 15000.00, 2);
+
+INSERT INTO invoices (invoice_number, deal_id, contact_id, status, issue_date, due_date, tax_rate, notes) VALUES
+(CONCAT('INV-', YEAR(CURDATE()), '-0001'), 3, 3, 'paid', DATE_SUB(CURDATE(), INTERVAL 5 DAY), DATE_ADD(CURDATE(), INTERVAL 25 DAY), 15.00, 'Sample invoice — Q3 soft skills refresh, paid on receipt.');
+
+INSERT INTO invoice_items (invoice_id, description, quantity, unit_price, sort_order) VALUES
+(1, 'Communication & Teamwork Workshop — 18 delegates', 18, 2333.33, 1);
+
+UPDATE invoices SET paid_at = CURDATE() WHERE id = 1;
+
+INSERT INTO expenses (description, category, amount, expense_date, vendor, payment_method, notes, deal_id, status) VALUES
+('Venue hire — Ilanga workshop dry-run', 'Venue & Catering', 3200.00, DATE_SUB(CURDATE(), INTERVAL 2 DAY), 'Rosebank Conference Centre', 'Card', 'Sample expense — half-day venue for a facilitator dry-run.', 1, 'approved'),
+('Printer paper & flip charts', 'Materials', 640.50, DATE_SUB(CURDATE(), INTERVAL 6 DAY), 'Waltons', 'Card', 'Sample expense — training material stock-up.', NULL, 'reimbursed');

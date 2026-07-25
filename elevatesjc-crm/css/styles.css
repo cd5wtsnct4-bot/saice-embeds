@@ -170,6 +170,25 @@ select.filter{padding:9px 10px;border:1.5px solid var(--border);border-radius:8p
 #toast{position:fixed;bottom:20px;right:20px;background:var(--brand-primary);color:#fff;padding:11px 18px;border-radius:8px;font-size:.8rem;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.2);opacity:0;transform:translateY(10px);transition:all .25s;pointer-events:none;z-index:200}
 #toast.show{opacity:1;transform:translateY(0)}
 
+/* ---------- Calendar ---------- */
+.cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px}
+.cal-weekdays div{text-align:center;font-size:.68rem;font-weight:700;color:var(--text-muted);text-transform:uppercase}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal-cell{background:#FAFBFD;border:1px solid var(--border);border-radius:8px;min-height:92px;padding:6px;cursor:pointer;transition:background .15s}
+.cal-cell:hover{background:#F0F4FA}
+.cal-cell.outside{opacity:.4}
+.cal-cell.today{border-color:var(--brand-accent);border-width:2px}
+.cal-daynum{font-size:.72rem;font-weight:700;color:var(--brand-primary);margin-bottom:4px}
+.cal-event{background:var(--brand-accent);color:var(--brand-primary-dark);font-size:.64rem;font-weight:700;padding:2px 6px;border-radius:5px;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+.cal-more{font-size:.62rem;color:var(--text-muted)}
+@media(max-width:640px){.cal-cell{min-height:60px}.cal-daynum{font-size:.64rem}.cal-event{font-size:.58rem}}
+
+/* ---------- Line-item editor (proposals / invoices) ---------- */
+.li-table th{font-size:.64rem}
+.li-table td{padding:6px}
+.li-table input{padding:6px 8px;font-size:.78rem;border:1.5px solid var(--border);border-radius:6px;width:100%}
+.li-total{font-size:.78rem;font-weight:700;color:var(--brand-primary);white-space:nowrap}
+
 /* ---------- Responsive ---------- */
 @media(max-width:860px){
   .sidebar{transform:translateX(-100%)}
