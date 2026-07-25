@@ -51,6 +51,11 @@ mysql -u elevatesjc_crm -p elevatesjc_crm < migrations/002_calendar_proposals_in
 mysql -u elevatesjc_crm -p elevatesjc_crm < migrations/003_ms_calendar_sync.sql
 ```
 
+Logo/colors/template-style/footer-notes (§6) need **no migration at all** —
+they're just new keys in the existing `settings` table. Just make sure the
+new `assets/branding/` folder (with its `.htaccess`) is uploaded alongside
+the PHP changes.
+
 ## 2. Configure `config.php`
 
 Either edit `config.php` directly, or (preferred) set these as real
@@ -177,6 +182,38 @@ legend at the top lets you show/hide each connected Microsoft calendar (see
   after a number was allocated leaves a gap rather than reusing it — normal
   behaviour for sequential document numbering, not a bug.
 
+### Branding: logo & colours
+
+**Settings > Logo** lets an admin upload a JPEG/PNG/WebP logo (max 3MB) —
+it replaces the letter-mark in the sidebar, the login screen, and the
+proposal/invoice letterhead. It's stored under the public `assets/branding/`
+folder (unlike `uploads/`, this one is deliberately *not* access-denied,
+since the login screen shows it before anyone is authenticated) with a
+random filename; the previous file is deleted whenever you upload a
+replacement or remove it. SVG uploads aren't accepted — a directly-browsed
+SVG can carry a `<script>`, and this folder has no auth gate to stop that.
+
+Beyond **Primary** and **Accent** color, there's now a **Secondary Accent
+Color** (defaults to gold, `#F4A300`) used for KPI highlights and the "Won"
+pipeline stage — three colors is enough to skin the whole app without
+turning this into a full theme editor.
+
+### Customisable quote/proposal/invoice templates
+
+**Settings > Quote / Proposal / Invoice Template** picks one of three
+letterhead layouts, all reading the same data (logo, colors, company
+details) — no PHP editing required to reskin a document:
+
+- **Classic** — bordered letterhead, closest to the original design.
+- **Modern** — a bold color band across the top.
+- **Minimal** — an understated thin rule line, no color block.
+
+**Proposal Footer Note** / **Invoice Footer Note** add your own free-text
+block (terms, a thank-you line, banking reminders) to the bottom of each
+document type. The shared layout logic lives in
+`includes/print_template.php` so `proposal_print.php` and
+`invoice_print.php` never duplicate CSS.
+
 ## 7. Expenses & receipt scanning
 
 Track expenses (category, amount, vendor, payment method), optionally
@@ -242,6 +279,12 @@ database rather than trusting a client-supplied path.
   `CRM_TOKEN_ENC_KEY`) — a database dump alone doesn't expose usable
   tokens. `cron/sync_calendars.php` is reachable over plain HTTP but is
   useless without `CRM_CRON_SECRET`, compared with `hash_equals()`.
+- The logo lives under `assets/branding/`, which is intentionally *not*
+  access-denied (unlike `uploads/`) since the login screen needs to show
+  it while logged out. Only JPEG/PNG/WebP are accepted — validated with a
+  real `getimagesize()` decode, not a file extension check — specifically
+  to keep SVG (and its script capability) out of a folder with no auth
+  gate. Uploads are admin-only and CSRF-protected.
 
 ## Folder layout
 
@@ -255,9 +298,10 @@ elevatesjc-crm/
 ├── migrations/
 │   ├── 002_calendar_proposals_invoices_expenses.sql   # for existing installs
 │   └── 003_ms_calendar_sync.sql                        # adds Microsoft calendar connections
-├── proposal_print.php        # printable proposal letterhead
-├── invoice_print.php         # printable invoice letterhead (+ banking details)
+├── proposal_print.php        # printable proposal letterhead (customisable, see §6)
+├── invoice_print.php         # printable invoice letterhead (customisable, see §6)
 ├── download_receipt.php      # gated receipt image viewer
+├── assets/branding/           # uploaded logo (public — no auth gate, see Security notes)
 ├── cron/
 │   └── sync_calendars.php     # background sync for all connected calendars (secret-guarded)
 ├── includes/
@@ -265,6 +309,8 @@ elevatesjc-crm/
 │   ├── auth.php               # session/CSRF/login helpers
 │   ├── response.php           # JSON response helpers
 │   ├── numbering.php           # atomic invoice/proposal numbering
+│   ├── branding.php             # logo upload validation + storage
+│   ├── print_template.php       # shared letterhead CSS/markup for the 3 template styles
 │   ├── uploads.php             # secure receipt upload handling
 │   ├── ocr.php                  # best-effort tesseract OCR (feature-detected)
 │   ├── msal_lite.php           # Microsoft OAuth2 + JWT verification (no external deps)
@@ -279,7 +325,7 @@ elevatesjc-crm/
 ├── api/                       # JSON endpoints consumed by js/app.js
 │   ├── auth.php, contacts.php, deals.php, tasks.php, calendar.php,
 │   ├── calendar_connections.php, proposals.php, invoices.php,
-│   ├── expenses.php, expenses_upload.php,
+│   ├── expenses.php, expenses_upload.php, settings_logo.php,
 │   └── programs.php, settings.php, dashboard.php, users.php
 ├── uploads/receipts/          # scanned slips (denies direct web access)
 ├── css/styles.css

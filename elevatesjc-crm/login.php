@@ -8,6 +8,18 @@ if (current_user()) {
     exit;
 }
 
+$settingsRows = db()->query('SELECT setting_key, setting_value FROM settings')->fetchAll();
+$settings = [];
+foreach ($settingsRows as $row) {
+    $settings[$row['setting_key']] = $row['setting_value'];
+}
+$companyName = $settings['company_name'] ?? 'Elevate SJC';
+$tagline = $settings['tagline'] ?? 'Driving performance. Unlocking potential.';
+$primaryColor = $settings['primary_color'] ?? '#142850';
+$accentColor = $settings['accent_color'] ?? '#16C79A';
+$logoPath = $settings['company_logo'] ?? null;
+$initial = strtoupper(substr($companyName, 0, 1));
+
 $csrf = csrf_token();
 $msEnabled = ms_login_enabled();
 $msError = isset($_GET['ms_error']) ? (string)$_GET['ms_error'] : '';
@@ -17,15 +29,20 @@ $msError = isset($_GET['ms_error']) ? (string)$_GET['ms_error'] : '';
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Sign in — Elevate SJC CRM</title>
+<title>Sign in — <?= htmlspecialchars($companyName) ?> CRM</title>
 <link rel="stylesheet" href="css/styles.css"/>
+<style>:root{--brand-primary:<?= htmlspecialchars($primaryColor) ?>;--brand-accent:<?= htmlspecialchars($accentColor) ?>;}</style>
 </head>
 <body>
 <div class="login-screen">
   <div class="login-card">
-    <div class="brand-mark">E</div>
-    <h1>Elevate SJC CRM</h1>
-    <p>Driving performance. Unlocking potential.</p>
+    <?php if ($logoPath): ?>
+    <img class="brand-mark brand-logo" src="<?= htmlspecialchars($logoPath) ?>" alt="<?= htmlspecialchars($companyName) ?> logo"/>
+    <?php else: ?>
+    <div class="brand-mark"><?= htmlspecialchars($initial) ?></div>
+    <?php endif; ?>
+    <h1><?= htmlspecialchars($companyName) ?> CRM</h1>
+    <p><?= htmlspecialchars($tagline) ?></p>
 
     <div class="login-err" id="loginErr"><?= $msError !== '' ? htmlspecialchars($msError) : '' ?></div>
 

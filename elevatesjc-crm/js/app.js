@@ -51,7 +51,10 @@
 
   async function api(path, opts) {
     opts = opts || {};
-    const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+    // FormData sets its own multipart Content-Type (with boundary) — letting
+    // the default 'application/json' through here would break file uploads.
+    const isFormData = typeof FormData !== 'undefined' && opts.body instanceof FormData;
+    const headers = isFormData ? Object.assign({}, opts.headers || {}) : Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
     if (opts.method && opts.method !== 'GET') headers['X-CSRF-Token'] = window.CRM.csrfToken;
     const res = await fetch(window.CRM.apiBase + path, Object.assign({ credentials: 'same-origin' }, opts, { headers }));
     if (res.status === 401) { window.location.href = 'login.php'; throw new Error('Not authenticated'); }
@@ -503,16 +506,31 @@
     const dis = isAdmin ? '' : 'disabled';
     const connections = calData.connections;
     contentEl.innerHTML = `
+      <div class="card">
+        <h3>Logo</h3>
+        <p style="font-size:.78rem;color:var(--text-muted);margin-bottom:10px">Shown in the sidebar, the login screen, and on printed proposals/invoices. JPEG, PNG or WebP, up to 3MB.</p>
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+          <div id="logoPreviewBox" style="width:64px;height:64px;border-radius:10px;background:#fff;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0">
+            ${s.company_logo ? `<img src="${esc(s.company_logo)}?t=${Date.now()}" alt="Logo" style="max-width:100%;max-height:100%;object-fit:contain"/>` : `<span style="font-weight:800;color:var(--brand-primary);font-size:1.3rem">${esc((s.company_name || 'E')[0].toUpperCase())}</span>`}
+          </div>
+          ${isAdmin ? `
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <label class="btn btn-outline btn-sm" style="cursor:pointer">Upload logo<input type="file" id="logoFileInput" accept="image/png,image/jpeg,image/webp" style="display:none"/></label>
+            ${s.company_logo ? '<button type="button" class="btn btn-outline btn-sm" id="removeLogoBtn">Remove logo</button>' : ''}
+          </div>` : ''}
+        </div>
+      </div>
       <form id="settingsForm">
         <div class="two-col">
           <div class="card">
-            <h3>Branding</h3>
+            <h3>Branding Colours</h3>
             <div class="field"><label>Company Name</label><input name="company_name" value="${esc(s.company_name)}" ${dis}/></div>
             <div class="field"><label>Tagline</label><input name="tagline" value="${esc(s.tagline)}" ${dis}/></div>
             <div class="field-row">
               <div class="field"><label>Primary Color</label><input type="color" name="primary_color" value="${s.primary_color || '#142850'}" ${dis}/></div>
               <div class="field"><label>Accent Color</label><input type="color" name="accent_color" value="${s.accent_color || '#16C79A'}" ${dis}/></div>
             </div>
+            <div class="field"><label>Secondary Accent Color</label><input type="color" name="accent_color_2" value="${s.accent_color_2 || '#F4A300'}" ${dis}/></div>
           </div>
           <div class="card">
             <h3>Company Details (used on proposal/invoice letterheads)</h3>
@@ -534,6 +552,19 @@
               <div class="field"><label>Account Number</label><input name="bank_account_number" value="${esc(s.bank_account_number)}" ${dis}/></div>
               <div class="field"><label>Branch Code</label><input name="bank_branch_code" value="${esc(s.bank_branch_code)}" ${dis}/></div>
             </div>
+          </div>
+          <div class="card">
+            <h3>Quote / Proposal / Invoice Template</h3>
+            <div class="field">
+              <label>Layout Style</label>
+              <select name="template_style" ${dis}>
+                <option value="classic" ${(s.template_style || 'classic') === 'classic' ? 'selected' : ''}>Classic — bordered letterhead</option>
+                <option value="modern" ${s.template_style === 'modern' ? 'selected' : ''}>Modern — bold colour band</option>
+                <option value="minimal" ${s.template_style === 'minimal' ? 'selected' : ''}>Minimal — understated rule line</option>
+              </select>
+            </div>
+            <div class="field"><label>Proposal Footer Note</label><textarea name="proposal_footer_note" ${dis} placeholder="e.g. Thank you for the opportunity to work with you.">${esc(s.proposal_footer_note)}</textarea></div>
+            <div class="field"><label>Invoice Footer Note</label><textarea name="invoice_footer_note" ${dis} placeholder="e.g. Payment due within 30 days. Thank you for your business.">${esc(s.invoice_footer_note)}</textarea></div>
           </div>
         </div>
         ${isAdmin ? '<div class="modal-actions" style="justify-content:flex-start;margin-top:6px"><button type="submit" class="btn btn-primary">Save Settings</button></div>' : '<p style="font-size:.72rem;color:var(--text-muted);margin-top:10px">Only administrators can change these settings.</p>'}
@@ -564,8 +595,26 @@
           await put('settings.php', body);
           document.documentElement.style.setProperty('--brand-primary', body.primary_color);
           document.documentElement.style.setProperty('--brand-accent', body.accent_color);
+          document.documentElement.style.setProperty('--brand-gold', body.accent_color_2);
           toast('Settings saved. Refresh to see branding text changes everywhere.');
         } catch (err) { alert(err.message); }
+      });
+      const logoInput = document.getElementById('logoFileInput');
+      if (logoInput) logoInput.addEventListener('change', async () => {
+        const file = logoInput.files[0];
+        if (!file) return;
+        const form = new FormData();
+        form.append('logo', file);
+        try {
+          await api('settings_logo.php', { method: 'POST', body: form });
+          toast('Logo updated.'); renderSettings();
+        } catch (err) { alert(err.message); }
+      });
+      const removeLogoBtn = document.getElementById('removeLogoBtn');
+      if (removeLogoBtn) removeLogoBtn.addEventListener('click', async () => {
+        if (!confirm('Remove the current logo?')) return;
+        try { await del('settings_logo.php'); toast('Logo removed.'); renderSettings(); }
+        catch (err) { alert(err.message); }
       });
     }
     contentEl.querySelectorAll('.calColorInput').forEach((input) => input.addEventListener('change', async () => {

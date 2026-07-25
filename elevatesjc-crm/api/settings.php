@@ -7,10 +7,13 @@ $pdo = db();
 $method = $_SERVER['REQUEST_METHOD'];
 
 const ALLOWED_SETTINGS = [
-    'company_name', 'tagline', 'primary_color', 'accent_color',
+    'company_name', 'tagline', 'primary_color', 'accent_color', 'accent_color_2',
     'company_address', 'company_phone', 'company_email', 'vat_number',
     'default_tax_rate', 'bank_name', 'bank_account_holder', 'bank_account_number', 'bank_branch_code',
+    'template_style', 'proposal_footer_note', 'invoice_footer_note',
 ];
+// company_logo is intentionally excluded — it's only ever written by
+// api/settings_logo.php (a real file upload, not a JSON string field).
 
 if ($method === 'GET') {
     $rows = $pdo->query('SELECT setting_key, setting_value FROM settings')->fetchAll();
