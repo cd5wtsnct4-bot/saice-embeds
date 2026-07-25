@@ -1067,7 +1067,9 @@
   (function handleMsCalendarRedirect() {
     const params = new URLSearchParams(location.search);
     if (params.has('ms_cal_connected')) toast('Microsoft calendar connected.');
-    if (params.has('ms_cal_error')) toast('Microsoft calendar: ' + params.get('ms_cal_error'));
+    // A failed connect/sync is rare but important — a 2.6s toast is too easy
+    // to miss right after an OAuth redirect, so this one gets a blocking alert.
+    if (params.has('ms_cal_error')) alert('Microsoft calendar connection failed:\n\n' + params.get('ms_cal_error'));
     if (params.has('ms_cal_connected') || params.has('ms_cal_error')) {
       history.replaceState(null, '', location.pathname + location.hash);
     }
