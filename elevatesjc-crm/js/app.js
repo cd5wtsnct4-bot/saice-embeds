@@ -160,6 +160,21 @@
   window.addEventListener('hashchange', route);
   document.getElementById('menuBtn').addEventListener('click', () => document.getElementById('sidebar').classList.toggle('open'));
 
+  // Re-render the Calendar view live when a resize crosses the grid/list
+  // breakpoint (rotating a phone, resizing a browser window) — no route
+  // change or reload needed. No-ops for every other page and for resizes
+  // that don't actually flip the layout.
+  let calResizeTimer = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(calResizeTimer);
+    calResizeTimer = setTimeout(() => {
+      const hash = (location.hash || '#/dashboard').replace(/^#\/?/, '');
+      if (hash === 'calendar' && calendarLastIsMobile !== null && calendarLastIsMobile !== isMobileCalendarView()) {
+        renderCalendar();
+      }
+    }, 200);
+  });
+
   // ================= Dashboard =================
   async function renderDashboard() {
     const d = await get('dashboard.php');
@@ -524,11 +539,16 @@
     contentEl.innerHTML = `
       <div class="card">
         <h3>Logo</h3>
-        <p style="font-size:.78rem;color:var(--text-muted);margin-bottom:10px">Shown in the sidebar, the login screen, and on printed proposals/invoices. JPEG, PNG or WebP, up to 3MB.</p>
+        <p style="font-size:.78rem;color:var(--text-muted);margin-bottom:10px">Shown in the sidebar, the login screen, and on printed proposals/invoices. A square crop is auto-generated for the iPhone home-screen icon (Settings > Add to Home Screen). JPEG, PNG or WebP, up to 3MB.</p>
         <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
           <div id="logoPreviewBox" style="width:64px;height:64px;border-radius:10px;background:#fff;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0">
             ${s.company_logo ? `<img src="${esc(s.company_logo)}?t=${Date.now()}" alt="Logo" style="max-width:100%;max-height:100%;object-fit:contain"/>` : `<span style="font-weight:800;color:var(--brand-primary);font-size:1.3rem">${esc((s.company_name || 'E')[0].toUpperCase())}</span>`}
           </div>
+          ${s.company_logo_icon ? `
+          <div style="text-align:center">
+            <div style="width:64px;height:64px;border-radius:14px;overflow:hidden;box-shadow:var(--shadow)"><img src="${esc(s.company_logo_icon)}?t=${Date.now()}" alt="App icon preview" style="width:100%;height:100%;object-fit:cover"/></div>
+            <div style="font-size:.62rem;color:var(--text-muted);margin-top:4px">App icon</div>
+          </div>` : ''}
           ${isAdmin ? `
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <label class="btn btn-outline btn-sm" style="cursor:pointer">Upload logo<input type="file" id="logoFileInput" accept="image/png,image/jpeg,image/webp" style="display:none"/></label>
@@ -648,9 +668,24 @@
   let calendarViewDate = null;
   const hiddenCalendars = new Set(); // 'local' and/or connection ids (as strings) currently hidden
   let calendarSyncing = false;
+  let calendarLastIsMobile = null; // tracks which layout was last rendered, so resize can detect a flip
 
   function calendarLabel(conn) {
     return conn.display_name || conn.ms_email || conn.owner_name;
+  }
+  // Below this width the 7-column grid gets too cramped to read — switch to
+  // a day-grouped agenda list instead. Same breakpoint used elsewhere for
+  // calendar-specific mobile tweaks (css/styles.css).
+  function isMobileCalendarView() {
+    return window.innerWidth <= 640;
+  }
+  function fmtEventTime(datetimeStr, allDay) {
+    if (allDay) return 'All day';
+    const t = datetimeStr.slice(11, 16);
+    const [h, m] = t.split(':').map(Number);
+    const period = h >= 12 ? 'PM' : 'AM';
+    const h12 = ((h + 11) % 12) + 1;
+    return `${h12}:${String(m).padStart(2, '0')} ${period}`;
   }
 
   async function renderCalendar() {
@@ -693,20 +728,44 @@
 
     const monthLabel = firstOfMonth.toLocaleDateString('en-ZA', { month: 'long', year: 'numeric' });
     const todayStr = ymd(new Date());
+    const isMobile = isMobileCalendarView();
+    calendarLastIsMobile = isMobile;
 
-    let cells = '';
-    for (let d = new Date(gridStart); d <= gridEnd; d.setDate(d.getDate() + 1)) {
-      const dayStr = ymd(d);
-      const inMonth = d.getMonth() === month;
-      const dayEvents = eventsByDay[dayStr] || [];
-      cells += `<div class="cal-cell${inMonth ? '' : ' outside'}${dayStr === todayStr ? ' today' : ''}" data-date="${dayStr}">
-        <div class="cal-daynum">${d.getDate()}</div>
-        ${dayEvents.slice(0, 3).map((e) => {
-          const isStart = dayStr === e.start_datetime.slice(0, 10);
-          return `<div class="cal-event${isStart ? '' : ' cal-event-cont'}" data-id="${e.id}"${e.calendar_color ? ` style="border-left:4px solid ${esc(e.calendar_color)}"` : ''}>${isStart ? '' : '› '}${esc(e.title)}</div>`;
-        }).join('')}
-        ${dayEvents.length > 3 ? `<div class="cal-more">+${dayEvents.length - 3} more</div>` : ''}
-      </div>`;
+    let bodyHtml;
+    if (isMobile) {
+      const dayKeys = Object.keys(eventsByDay).sort();
+      bodyHtml = `<div class="cal-list">${dayKeys.length ? dayKeys.map((dayStr) => {
+        const d = new Date(dayStr + 'T00:00:00');
+        const label = d.toLocaleDateString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short' });
+        const rows = eventsByDay[dayStr].slice().sort((a, b) => a.start_datetime.localeCompare(b.start_datetime));
+        return `<div class="cal-list-day${dayStr === todayStr ? ' today' : ''}">
+          <div class="cal-list-daylabel">${label}${dayStr === todayStr ? ' <span class="cal-list-todaytag">Today</span>' : ''}</div>
+          ${rows.map((e) => {
+            const isStart = dayStr === e.start_datetime.slice(0, 10);
+            return `<div class="cal-list-event" data-id="${e.id}">
+              <span class="cal-dot" style="background:${esc(e.calendar_color || 'var(--brand-accent)')}"></span>
+              <span class="cal-list-time">${isStart ? esc(fmtEventTime(e.start_datetime, e.all_day)) : '› cont.'}</span>
+              <span class="cal-list-title">${esc(e.title)}${e.location ? `<span class="cal-list-loc"> · ${esc(e.location)}</span>` : ''}</span>
+            </div>`;
+          }).join('')}
+        </div>`;
+      }).join('') : '<div class="empty">No events in this range.</div>'}</div>`;
+    } else {
+      let cells = '';
+      for (let d = new Date(gridStart); d <= gridEnd; d.setDate(d.getDate() + 1)) {
+        const dayStr = ymd(d);
+        const inMonth = d.getMonth() === month;
+        const dayEvents = eventsByDay[dayStr] || [];
+        cells += `<div class="cal-cell${inMonth ? '' : ' outside'}${dayStr === todayStr ? ' today' : ''}" data-date="${dayStr}">
+          <div class="cal-daynum">${d.getDate()}</div>
+          ${dayEvents.slice(0, 3).map((e) => {
+            const isStart = dayStr === e.start_datetime.slice(0, 10);
+            return `<div class="cal-event${isStart ? '' : ' cal-event-cont'}" data-id="${e.id}"${e.calendar_color ? ` style="border-left:4px solid ${esc(e.calendar_color)}"` : ''}>${isStart ? '' : '› '}${esc(e.title)}</div>`;
+          }).join('')}
+          ${dayEvents.length > 3 ? `<div class="cal-more">+${dayEvents.length - 3} more</div>` : ''}
+        </div>`;
+      }
+      bodyHtml = `<div class="cal-weekdays">${WEEKDAY_LABELS.map((d) => `<div>${d}</div>`).join('')}</div><div class="cal-grid">${cells}</div>`;
     }
 
     const legendChips = [
@@ -728,10 +787,7 @@
         </div>
       </div>
       <div class="cal-legend">${legendChips}</div>
-      <div class="card">
-        <div class="cal-weekdays">${WEEKDAY_LABELS.map((d) => `<div>${d}</div>`).join('')}</div>
-        <div class="cal-grid">${cells}</div>
-      </div>`;
+      <div class="card">${bodyHtml}</div>`;
 
     document.getElementById('calPrev').addEventListener('click', () => { calendarViewDate = new Date(year, month - 1, 1); renderCalendar(); });
     document.getElementById('calNext').addEventListener('click', () => { calendarViewDate = new Date(year, month + 1, 1); renderCalendar(); });
@@ -752,7 +808,7 @@
       if (box.checked) hiddenCalendars.delete(key); else hiddenCalendars.add(key);
       renderCalendar();
     }));
-    contentEl.querySelectorAll('.cal-event').forEach((el) => el.addEventListener('click', (e) => {
+    contentEl.querySelectorAll('.cal-event, .cal-list-event').forEach((el) => el.addEventListener('click', (e) => {
       e.stopPropagation();
       openEventModal(events.find((x) => x.id == el.dataset.id), contacts, deals, myConnections);
     }));

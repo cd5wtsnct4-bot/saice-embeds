@@ -162,7 +162,44 @@ A month-view calendar (**Calendar** in the nav) for meetings, training
 sessions and follow-up calls, optionally linked to a contact and/or deal.
 Click a day to add an event, click an event to edit or delete it. A colour
 legend at the top lets you show/hide each connected Microsoft calendar (see
-§4b) alongside purely local CRM events.
+§4b) alongside purely local CRM events. A booking spanning more than one day
+shows as booked on every day it covers, with a "› cont." marker on the
+later days.
+
+Below ~640px wide (a phone, or the installed app — see §9) the grid switches
+to a day-grouped agenda list instead, since a 7-column grid is too cramped
+to read at that size. This happens live on resize (rotating the phone,
+resizing a browser window) — no page reload needed.
+
+## 9. Installing on your iPhone (or any phone) as an app
+
+The CRM is a installable web app (PWA) — no App Store needed:
+
+1. Open the CRM in **Safari** on your iPhone (not Chrome — iOS only allows
+   Safari to install web apps to the home screen).
+2. Tap the **Share** icon, then **Add to Home Screen**.
+3. It installs with your company's logo/name as the icon (see below) and
+   opens full-screen, without Safari's address bar — hamburger menu and all
+   the same responsive behaviour as the browser version.
+
+**Using your own logo as the app icon:** upload it once under **Settings >
+Logo**. Most logos are a wide/tall lockup (a mark plus a wordmark), which
+would look squashed or illegible as a tiny home-screen icon, so the upload
+automatically generates a square crop for that specific purpose —
+`includes/branding.php`'s `generate_square_icon()` crops to the top of the
+image for portrait-oriented logos (where the mark usually sits, with
+tagline/text below) and to the centre for landscape/square ones. Settings
+shows a preview of exactly what will be used as the icon; if it doesn't
+frame your logo well, crop a square version yourself and upload that
+instead — it'll be used as-is by the same generator (a square input crops
+to itself).
+
+Under the hood: `manifest.php` is a dynamically-generated Web App Manifest
+(name/colours/icon follow your current Settings, not a hardcoded default),
+and `sw.js` is a minimal service worker that caches only `css/styles.css`
+and `js/app.js` for a faster/offline-tolerant app shell — it never caches
+API responses or any `*.php` page, since those carry live business data and
+a per-session CSRF token that must never go stale.
 
 ## 6. Proposals & Invoicing
 
@@ -285,6 +322,12 @@ database rather than trusting a client-supplied path.
   real `getimagesize()` decode, not a file extension check — specifically
   to keep SVG (and its script capability) out of a folder with no auth
   gate. Uploads are admin-only and CSRF-protected.
+- `manifest.php` and `sw.js` are public and unauthenticated by design — a
+  browser must be able to fetch both before a user has logged in (that's
+  the whole point of "Add to Home Screen"). Neither exposes anything
+  beyond what the login screen itself already shows (company name,
+  colours, logo); `sw.js` only ever caches static CSS/JS, never a page or
+  API response, so there's no live data to leak through it.
 
 ## Folder layout
 
@@ -301,7 +344,11 @@ elevatesjc-crm/
 ├── proposal_print.php        # printable proposal letterhead (customisable, see §6)
 ├── invoice_print.php         # printable invoice letterhead (customisable, see §6)
 ├── download_receipt.php      # gated receipt image viewer
-├── assets/branding/           # uploaded logo (public — no auth gate, see Security notes)
+├── manifest.php               # dynamic PWA Web App Manifest (see §9)
+├── sw.js                       # service worker — caches only css/styles.css + js/app.js
+├── assets/
+│   ├── branding/               # uploaded logo + generated icon crop (public, see Security notes)
+│   └── icons/                  # default app icon set, used until a logo is uploaded
 ├── cron/
 │   └── sync_calendars.php     # background sync for all connected calendars (secret-guarded)
 ├── includes/
@@ -309,7 +356,7 @@ elevatesjc-crm/
 │   ├── auth.php               # session/CSRF/login helpers
 │   ├── response.php           # JSON response helpers
 │   ├── numbering.php           # atomic invoice/proposal numbering
-│   ├── branding.php             # logo upload validation + storage
+│   ├── branding.php             # logo upload validation + storage + square icon crop
 │   ├── print_template.php       # shared letterhead CSS/markup for the 3 template styles
 │   ├── uploads.php             # secure receipt upload handling
 │   ├── ocr.php                  # best-effort tesseract OCR (feature-detected)

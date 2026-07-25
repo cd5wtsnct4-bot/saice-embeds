@@ -9,6 +9,11 @@
  * but a directly-browsed SVG can carry an executable <script>, and this
  * folder is public by design, so we only take formats with no script
  * capability at all.
+ *
+ * Every upload also generates a square "icon" crop (see generate_square_icon)
+ * for use as the PWA/apple-touch-icon — most real logos are a wide or tall
+ * lockup (mark + wordmark), which looks squashed or illegible if used as-is
+ * for a tiny home-screen icon.
  */
 require_once __DIR__ . '/uploads.php'; // reuses the UploadException class
 
@@ -18,16 +23,68 @@ const LOGO_ALLOWED_TYPES = [
     IMAGETYPE_PNG => 'png',
     IMAGETYPE_WEBP => 'webp',
 ];
+const LOGO_ICON_SIZE = 512;
 
 function logo_upload_root(): string
 {
     return __DIR__ . '/../assets/branding';
 }
 
-/** Validate and store an uploaded logo from $_FILES['logo'], removing any
- *  previous logo file. Returns the relative (from app root) path to store
- *  in the `company_logo` setting. */
-function store_logo_upload(array $file, ?string $previousRelativePath): string
+function logo_load_image(string $path, int $imagetype)
+{
+    switch ($imagetype) {
+        case IMAGETYPE_JPEG: return @imagecreatefromjpeg($path);
+        case IMAGETYPE_PNG: return @imagecreatefrompng($path);
+        case IMAGETYPE_WEBP: return @imagecreatefromwebp($path);
+        default: return false;
+    }
+}
+
+/**
+ * Crop the source image to a centered square and resize to LOGO_ICON_SIZE.
+ * Tall/portrait lockups (mark-on-top, text-below — the common convention)
+ * are anchored to the TOP of the image rather than dead-center, since that's
+ * where the actual mark usually sits; wide/landscape or already-square
+ * images are center-cropped. Returns the relative path of the generated PNG.
+ */
+function generate_square_icon(string $sourcePath, int $imagetype, string $destDir, string $baseName): ?string
+{
+    $src = logo_load_image($sourcePath, $imagetype);
+    if (!$src) {
+        return null;
+    }
+    $width = imagesx($src);
+    $height = imagesy($src);
+    $square = min($width, $height);
+    $srcX = (int) round(($width - $square) / 2);
+    $srcY = $height > $width ? 0 : (int) round(($height - $square) / 2);
+
+    $icon = imagecreatetruecolor(LOGO_ICON_SIZE, LOGO_ICON_SIZE);
+    imagealphablending($icon, false);
+    imagesavealpha($icon, true);
+    $transparent = imagecolorallocatealpha($icon, 0, 0, 0, 127);
+    imagefilledrectangle($icon, 0, 0, LOGO_ICON_SIZE, LOGO_ICON_SIZE, $transparent);
+    imagealphablending($icon, true);
+
+    imagecopyresampled($icon, $src, 0, 0, $srcX, $srcY, LOGO_ICON_SIZE, LOGO_ICON_SIZE, $square, $square);
+    imagedestroy($src);
+
+    $filename = $baseName . '-icon.png';
+    $ok = imagepng($icon, $destDir . '/' . $filename);
+    imagedestroy($icon);
+    if (!$ok) {
+        return null;
+    }
+    chmod($destDir . '/' . $filename, 0644);
+    return 'assets/branding/' . $filename;
+}
+
+/**
+ * Validate and store an uploaded logo from $_FILES['logo'], removing any
+ * previously stored logo + icon files. Returns
+ * ['logo' => <path for in-app display>, 'icon' => <square path for app icons, or null>].
+ */
+function store_logo_upload(array $file, ?string $previousLogoPath, ?string $previousIconPath): array
 {
     if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
         throw new UploadException('Upload failed (error code ' . ($file['error'] ?? 'unknown') . ').');
@@ -50,18 +107,22 @@ function store_logo_upload(array $file, ?string $previousRelativePath): string
         throw new UploadException('Could not create upload directory.');
     }
 
-    $filename = 'logo-' . bin2hex(random_bytes(8)) . '.' . $ext;
+    $baseName = 'logo-' . bin2hex(random_bytes(8));
+    $filename = $baseName . '.' . $ext;
     $dest = $dir . '/' . $filename;
     if (!move_uploaded_file($file['tmp_name'], $dest)) {
         throw new UploadException('Could not save the uploaded file.');
     }
     chmod($dest, 0644);
 
-    remove_logo_file($previousRelativePath);
-    return 'assets/branding/' . $filename;
+    $iconPath = generate_square_icon($dest, $info[2], $dir, $baseName);
+
+    remove_logo_file($previousLogoPath);
+    remove_logo_file($previousIconPath);
+    return ['logo' => 'assets/branding/' . $filename, 'icon' => $iconPath];
 }
 
-/** Best-effort delete of a previously stored logo file (never fatal). */
+/** Best-effort delete of a previously stored logo/icon file (never fatal). */
 function remove_logo_file(?string $relativePath): void
 {
     if (!$relativePath) {

@@ -1,0 +1,3 @@
+# App icons are intentionally public (referenced by manifest.php / apple-touch-icon
+# for the iPhone home-screen install) — unlike uploads/, this folder is NOT denied.
+Options -Indexes

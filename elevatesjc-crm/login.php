@@ -19,6 +19,7 @@ $primaryColor = $settings['primary_color'] ?? '#142850';
 $accentColor = $settings['accent_color'] ?? '#16C79A';
 $logoPath = $settings['company_logo'] ?? null;
 $initial = strtoupper(substr($companyName, 0, 1));
+$touchIcon = $settings['company_logo_icon'] ?? 'assets/icons/icon-180.png';
 
 $csrf = csrf_token();
 $msEnabled = ms_login_enabled();
@@ -28,9 +29,17 @@ $msError = isset($_GET['ms_error']) ? (string)$_GET['ms_error'] : '';
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
 <title>Sign in — <?= htmlspecialchars($companyName) ?> CRM</title>
 <link rel="stylesheet" href="css/styles.css"/>
+<link rel="manifest" href="manifest.php"/>
+<link rel="apple-touch-icon" href="<?= htmlspecialchars($touchIcon) ?>"/>
+<link rel="icon" href="assets/icons/icon-32.png" sizes="32x32"/>
+<meta name="theme-color" content="<?= htmlspecialchars($primaryColor) ?>"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="<?= htmlspecialchars($companyName) ?>"/>
 <style>:root{--brand-primary:<?= htmlspecialchars($primaryColor) ?>;--brand-accent:<?= htmlspecialchars($accentColor) ?>;}</style>
 </head>
 <body>
@@ -87,6 +96,9 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     errEl.textContent = 'Network error — please try again.';
   }
 });
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
 </script>
 </body>
 </html>

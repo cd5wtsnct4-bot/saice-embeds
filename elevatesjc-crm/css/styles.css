@@ -37,8 +37,9 @@ input,select,textarea{font-family:inherit;font-size:.85rem}
   width:var(--sidebar-w);flex-shrink:0;background:var(--brand-primary);
   color:#fff;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:20;
   transition:transform .25s ease;
+  padding-left:env(safe-area-inset-left,0px);
 }
-.brand{display:flex;align-items:center;gap:10px;padding:20px 18px;border-bottom:1px solid rgba(255,255,255,.12)}
+.brand{display:flex;align-items:center;gap:10px;padding:calc(20px + env(safe-area-inset-top,0px)) 18px 20px;border-bottom:1px solid rgba(255,255,255,.12)}
 .brand-mark{width:36px;height:36px;border-radius:8px;background:var(--brand-accent);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.1rem;color:var(--brand-primary-dark);flex-shrink:0}
 .brand-logo{background:#fff;object-fit:contain;padding:3px}
 .brand-text{line-height:1.15}
@@ -54,12 +55,13 @@ input,select,textarea{font-family:inherit;font-size:.85rem}
 .nav-item.active{background:var(--brand-accent);color:var(--brand-primary-dark)}
 .nav-ic{width:20px;height:20px;flex-shrink:0}
 
-.sidebar-foot{padding:14px 18px;border-top:1px solid rgba(255,255,255,.12);font-size:.68rem;color:rgba(255,255,255,.5)}
+.sidebar-foot{padding:14px 18px calc(14px + env(safe-area-inset-bottom,0px));border-top:1px solid rgba(255,255,255,.12);font-size:.68rem;color:rgba(255,255,255,.5)}
 
 .main{flex:1;margin-left:var(--sidebar-w);display:flex;flex-direction:column;min-width:0}
 
 .topbar{
-  background:var(--surface);border-bottom:1px solid var(--border);padding:14px 24px;
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:calc(14px + env(safe-area-inset-top,0px)) calc(24px + env(safe-area-inset-right,0px)) 14px calc(24px + env(safe-area-inset-left,0px));
   display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:10;
 }
 .topbar h1{font-size:1.05rem;font-weight:800;color:var(--brand-primary)}
@@ -158,7 +160,7 @@ select.filter{padding:9px 10px;border:1.5px solid var(--border);border-radius:8p
 .empty{text-align:center;padding:40px 20px;color:var(--text-muted);font-size:.82rem}
 
 /* ---------- Login ---------- */
-.login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--brand-primary),var(--brand-primary-dark));padding:20px}
+.login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--brand-primary),var(--brand-primary-dark));padding:calc(20px + env(safe-area-inset-top,0px)) calc(20px + env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) calc(20px + env(safe-area-inset-left,0px))}
 .login-card{background:var(--surface);border-radius:14px;padding:36px 32px;width:100%;max-width:360px;box-shadow:0 20px 50px rgba(0,0,0,.3);text-align:center}
 .login-card .brand-mark{margin:0 auto 14px;width:52px;height:52px;font-size:1.5rem}
 .login-card h1{color:var(--brand-primary);font-size:1.15rem;margin-bottom:2px}
@@ -188,6 +190,18 @@ select.filter{padding:9px 10px;border:1.5px solid var(--border);border-radius:8p
 .cal-legend-chip input{cursor:pointer}
 .cal-dot{display:inline-block;width:9px;height:9px;border-radius:50%;flex-shrink:0}
 @media(max-width:640px){.cal-cell{min-height:60px}.cal-daynum{font-size:.64rem}.cal-event{font-size:.58rem}}
+
+/* ---------- Calendar: mobile agenda/list view ---------- */
+.cal-list-day{padding:10px 2px}
+.cal-list-day+.cal-list-day{border-top:1px solid var(--border)}
+.cal-list-daylabel{font-size:.74rem;font-weight:800;color:var(--brand-primary);margin-bottom:8px;text-transform:uppercase;letter-spacing:.03em}
+.cal-list-todaytag{background:var(--brand-accent);color:var(--brand-primary-dark);font-size:.6rem;font-weight:700;padding:1px 7px;border-radius:10px;text-transform:none;letter-spacing:0}
+.cal-list-event{display:flex;align-items:baseline;gap:9px;padding:8px 6px;border-radius:8px;cursor:pointer}
+.cal-list-event:hover{background:#F0F4FA}
+.cal-list-event .cal-dot{align-self:center}
+.cal-list-time{font-size:.68rem;font-weight:700;color:var(--text-muted);white-space:nowrap;min-width:64px;flex-shrink:0}
+.cal-list-title{font-size:.82rem;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis}
+.cal-list-loc{font-weight:400;color:var(--text-muted)}
 
 /* ---------- Line-item editor (proposals / invoices) ---------- */
 .li-table th{font-size:.64rem}

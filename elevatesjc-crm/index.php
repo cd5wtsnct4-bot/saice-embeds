@@ -17,6 +17,7 @@ $accentColor = $settings['accent_color'] ?? '#16C79A';
 $accentColor2 = $settings['accent_color_2'] ?? '#F4A300';
 $logoPath = $settings['company_logo'] ?? null;
 $initial = strtoupper(substr($companyName, 0, 1));
+$touchIcon = $settings['company_logo_icon'] ?? 'assets/icons/icon-180.png';
 
 $csrf = csrf_token();
 ?>
@@ -24,9 +25,17 @@ $csrf = csrf_token();
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
 <title><?= htmlspecialchars($companyName) ?> CRM</title>
 <link rel="stylesheet" href="css/styles.css"/>
+<link rel="manifest" href="manifest.php"/>
+<link rel="apple-touch-icon" href="<?= htmlspecialchars($touchIcon) ?>"/>
+<link rel="icon" href="assets/icons/icon-32.png" sizes="32x32"/>
+<meta name="theme-color" content="<?= htmlspecialchars($primaryColor) ?>"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="<?= htmlspecialchars($companyName) ?>"/>
 <style>:root{--brand-primary:<?= htmlspecialchars($primaryColor) ?>;--brand-accent:<?= htmlspecialchars($accentColor) ?>;--brand-gold:<?= htmlspecialchars($accentColor2) ?>;}</style>
 </head>
 <body>
@@ -82,6 +91,9 @@ window.CRM = {
   currentUser: <?= json_encode(['id' => (int)$user['id'], 'name' => $user['name'], 'role' => $user['role']]) ?>,
   apiBase: 'api/'
 };
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
 </script>
 <script src="js/app.js"></script>
 </body>

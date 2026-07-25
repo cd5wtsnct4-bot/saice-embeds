@@ -12,8 +12,9 @@ const ALLOWED_SETTINGS = [
     'default_tax_rate', 'bank_name', 'bank_account_holder', 'bank_account_number', 'bank_branch_code',
     'template_style', 'proposal_footer_note', 'invoice_footer_note',
 ];
-// company_logo is intentionally excluded — it's only ever written by
-// api/settings_logo.php (a real file upload, not a JSON string field).
+// company_logo / company_logo_icon are intentionally excluded — they're
+// only ever written by api/settings_logo.php (a real file upload + a
+// generated square crop, not JSON string fields).
 
 if ($method === 'GET') {
     $rows = $pdo->query('SELECT setting_key, setting_value FROM settings')->fetchAll();
