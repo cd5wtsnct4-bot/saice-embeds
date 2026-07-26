@@ -1,0 +1,17 @@
+{
+  "name": "elevatesjc-crm-mobile",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Native Android/iOS app shell for the Elevate SJC CRM — wraps the live web app (elevatesjc.co.za/crm) in a Capacitor WebView so it can be built, signed and distributed as a real .ipa/.apk.",
+  "scripts": {
+    "sync": "cap sync",
+    "open:ios": "cap open ios",
+    "open:android": "cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.4.2",
+    "@capacitor/cli": "8.4.2",
+    "@capacitor/core": "8.4.2",
+    "@capacitor/ios": "8.4.2"
+  }
+}

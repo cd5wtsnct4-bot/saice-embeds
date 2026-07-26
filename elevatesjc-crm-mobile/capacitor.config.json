@@ -1,0 +1,19 @@
+{
+  "appId": "za.co.elevatesjc.crm",
+  "appName": "Elevate SJC",
+  "webDir": "www",
+  "backgroundColor": "#142850",
+  "server": {
+    "url": "https://elevatesjc.co.za/crm/",
+    "androidScheme": "https",
+    "cleartext": false
+  },
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#142850"
+  },
+  "android": {
+    "backgroundColor": "#142850",
+    "allowMixedContent": false
+  }
+}

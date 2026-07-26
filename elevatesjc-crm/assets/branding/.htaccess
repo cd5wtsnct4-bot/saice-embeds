@@ -1,0 +1,3 @@
+# Logos are intentionally public (shown on the pre-auth login screen and on
+# printed proposals/invoices) — unlike uploads/, this folder is NOT denied.
+Options -Indexes
